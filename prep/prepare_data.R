@@ -87,7 +87,7 @@ for (i in which(surveys$country %in% countryList) ) {
 for (indicator in indicatorlist) {
   tryCatch(
     savedata_one_indicator(indicator, country, year,irname,prname,krname,brname,
-    infolist, source_path),
+    infolist, source_path,results_path),
     error = function(e) {
       message("Failed indicator ", indicator, ": ", conditionMessage(e))
     }

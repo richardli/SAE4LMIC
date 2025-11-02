@@ -191,7 +191,7 @@ get_dhs_for_indicator <- function(ind,country,year,irname,prname,krname,brname,
 }
 
 savedata_one_indicator <- function(ind,country,year,irname,prname,krname,brname,
-  infolist, source_path) {
+  infolist, source_path,results_path) {
   message("\n=== Indicator: ", ind, " ===")
   dhsData=NULL
   dhsData <- get_dhs_for_indicator(ind= ind,

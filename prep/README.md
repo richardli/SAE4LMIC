@@ -10,3 +10,5 @@ source("prepare_data.R")
 ```
 
 To update only a subset of countries or indicators, you need to edit the loops inside the last two scripts.
+
+After running these scripts, all DHS survey information and binary indicator files will be produced and stored in the corresponding directories.
