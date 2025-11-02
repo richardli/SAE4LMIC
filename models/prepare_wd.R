@@ -28,7 +28,7 @@ for (i in seq_len(nrow(surveys))) {
   
   # per-survey results path
   results_path <- file.path(source_path, "Gates-results/Results", country, year)
-  dir.create(results_path, recursive = TRUE, showWarnings = FALSE)
+  dir.create(results_path, recursive = TRUE, showWarnings = TRUE)
   
 }
 
@@ -43,7 +43,7 @@ for (i in seq_len(nrow(surveys))) {
   
   # per-survey results path
   results_path <- file.path(source_path, "Gates-results/check", country, year)
-  dir.create(results_path, recursive = TRUE, showWarnings = FALSE)
+  dir.create(results_path, recursive = TRUE, showWarnings = TRUE)
   
 }
 
@@ -58,7 +58,7 @@ for (i in seq_len(nrow(surveys))) {
   
   # per-survey results path
   results_path <- file.path(source_path, "Gates-results/ShinyPlots", country, year)
-  dir.create(results_path, recursive = TRUE, showWarnings = FALSE)
+  dir.create(results_path, recursive = TRUE, showWarnings = TRUE)
   
 }
 
