@@ -1,64 +1,11 @@
-library(sf)
-library(ggplot2)
-library(tidyr)
-library(dplyr)
-library(patchwork)
-library(robustbase)
-library(raster)
-library(devtools)
-library(forcats)
-library(qs)
-library(countrycode)
-# install_github("richardli/surveyPrev",force = T)
-# install_github("richardli/SUMMER")
+#
+# This script fits the two levels of models for the SAE4LMIC web app
+#
 
-library(surveyPrev)
-library(SUMMER)
-library(INLA)
-library(here)
-
-
-
-
-
-library(here)
-setwd("/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-data")
-source_path<- here::here()
-infolist <- read.csv(here(source_path, "infolist.csv"))
-surveys <- read.csv(here(source_path, "surveyslist.csv"))
-
-
-
-
-source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
-infolist <- read.csv(file.path(source_path, "infolist.csv"))
-surveys <- read.csv(file.path(source_path, "surveyslist.csv"))
-indicatorlist=infolist$ID
-
-# indicatorlist= c("ED_LITR_W_LIT","CO_MOBB_W_MOB",
-#                  "ED_EDUC_W_SEH","HC_WIXQ_P_12Q",
-#                  "FP_CUSM_W_MOD","RH_ANCN_W_N4P",
-#                  "RH_DELP_C_DHT","RH_DELA_C_SKP",
-#                  "CH_VACC_C_DP3","CH_VACC_C_MSL",
-#                  "CH_VACC_C_NON","CN_NUTS_C_WH2",
-#                  "CN_NUTS_C_HA2","ML_NETC_C_ITN",
-#                  "CM_ECMR_C_NNF","RH_DELP_C_HOM")
-
-
-
-
-
-countryList="Tanzania"
-
-countryList="Nigeria"
-
-
-
-
-
-#step 2.1  direct estimates
-
-for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
+## -------------------------------------------------------------------------##
+## ------------------- Direct estimation -----------------------------------##
+## -------------------------------------------------------------------------##
+for (i in which(surveys$country %in% country_to_run)){ 
   country       <- surveys$country[i]
   year          <- surveys$year[i]
   country_short <- surveys$country_short[i]
@@ -71,11 +18,7 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
   # Load basic Rdata once per survey
   load(file.path(results_path, "basic.Rdata"))
 
-
-  
-
-  
-  for (indicator in indicatorlist) {
+  for (indicator in indicator_to_run) {
 
     qfile=  paste0(file.path(results_path, indicator),".qs")
 
@@ -86,9 +29,9 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
       loaded_data1 <- qread(qfile)
       data=loaded_data1
 
-
-
-
+      ##
+      ##  Countries with alternative strata
+      ##
       if (country == "Rwanda" |
           (country == "Tanzania" && year == 2015) |
           (country == "Mali" && year == 2023) |
@@ -129,7 +72,9 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
         
         res_adm0$data.info<-data.info$summary.ad0
         
-    
+      ##
+      ##  Countries with default strata
+      ##    
       }else{
         
         data.info<-surveyPrev::datainfo(
@@ -163,8 +108,6 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
         
 
       }
-
-
       
       out0 <- file.path(results_path, paste0( "res_adm0-",indicator, ".qs"))
       qs::qsave(res_adm0, file = out0)
@@ -182,8 +125,7 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
       qs::qsave(res_adm2_fix, file = out2)
       message("Saved: ", out2)
       
-      
-
+     
      
       # res_data_ad0[[surveys$iso3[i]]][[as.character(year)]][[indicator]]<-res_adm0
       # 
@@ -193,31 +135,20 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
       # 
 
       message("done: ", indicator, year)
-
-
-    }else {
+	} else {
       message("Missing ", indicator)
-    }
-    
-    
-      
-      
-    
-  }
+    }    
+}
+}
+
+ 
+
+## -------------------------------------------------------------------------##
+## ---------------------------- FH model -----------------------------------##
+## -------------------------------------------------------------------------##
 
 
-  
-
-  }
-
-
-
-
-#step 2.2  fh model 
-
-
-
-for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
+for (i in which(surveys$country %in% country_to_run)) { #seq_len(nrow(surveys))
   country       <- surveys$country[i]
   year          <- surveys$year[i]
   country_short <- surveys$country_short[i]
@@ -234,7 +165,7 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
   
   
   
-  for (indicator in indicatorlist) {
+  for (indicator in indicator_to_run) {
     
     qfile=  paste0(file.path(results_path, indicator),".qs")
     
@@ -329,22 +260,7 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
       
     }else {
       message("Missing ", indicator)
-    }
-    
-    
-    
-    
-    
-  }
+    }   
+ }
+ } 
   
-  
-  
-  
-}
-
-
-
-
-
-
-

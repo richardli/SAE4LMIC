@@ -33,16 +33,21 @@ This code repository assumes the following directory structures
 
 ## Administrator tasks
 
-### Steps when adding new indicators
+### Initialization from scratch
+1. Follow `prep/README.md` to set things up
+
+### Generating outputs from fitted models
+
+### Adding new indicators
 1. Update `info/infolist.csv`
-2. Run `models/prep_wd.R` to create the directories
-3. ...
+2. Follow `prep/README.md` to update the directory and binary data files
+3. Check consistency with API using ...
 
-### Steps when adding new surveys
+### Adding new surveys
 1. Update `info/surveylist.csv` and `info/shapefilelist.csv`
-2. Run `models/prep_wd.R` to create the directories
-3. ...
-
+2. Follow `prep/README.md` to update the directory and binary data files
+3. Check consistency in country information using ...
+4. Check consistency with API using ...
 
 ## Detailed folder structures
 
