@@ -1,200 +1,7 @@
-get_dhs_filenames <- function(country, year) {
-  if (country == "Nigeria" & year == 2024) {
-    irname <- "NGIR8ADT/NGIR8AFL.DTA"
-    krname <- "NGKR8ADT/NGKR8AFL.DTA"
-    prname <- "NGPR8ADT/NGPR8AFL.DTA"
-    brname <- "NGBR8ADT/NGBR8AFL.DTA"
-
-  } else if (country == "Nigeria" & year == 2018) {
-    irname <- "NGIR7BDT/NGIR7BFL.DTA"
-    krname <- "NGKR7BDT/NGKR7BFL.DTA"
-    prname <- "NGPR7BDT/NGPR7BFL.DTA"
-    brname <- "NGBR7BDT/NGBR7BFL.DTA"
-
-  } else if (country == "Burkina Faso" & year == 2021) {
-    irname <- "BFIR81DT/BFIR81FL.DTA"
-    krname <- "BFKR81DT/BFKR81FL.DTA"
-    prname <- "BFPR81DT/BFPR81FL.DTA"
-    brname <- "BFBR81DT/BFBR81FL.DTA"
-
-  } else if (country == "Burkina Faso" & year == 2010) {
-    irname <- "BFIR62DT/BFIR62FL.DTA"
-    krname <- "BFKR62DT/BFKR62FL.DTA"
-    prname <- "BFPR62DT/BFPR62FL.DTA"
-    brname <- "BFBR62DT/BFBR62FL.DTA"
-
-  } else if (country == "Congo Democratic Republic" & year == 2023) {
-    irname <- "CDIR81DT/CDIR81FL.DTA"
-    krname <- "CDKR81DT/CDKR81FL.DTA"
-    prname <- "CDPR81DT/CDPR81FL.DTA"
-    brname <- "CDBR81DT/CDBR81FL.DTA"
-
-  } else if (country == "Congo Democratic Republic" & year == 2013) {
-    irname <- "CDIR61DT/CDIR61FL.DTA"
-    krname <- "CDKR61DT/CDKR61FL.DTA"
-    prname <- "CDPR61DT/CDPR61FL.DTA"
-    brname <- "CDBR61DT/CDBR61FL.DTA"
-
-  } else if (country == "Ethiopia" & year == 2019) {
-    irname <- "ETIR81DT/ETIR81FL.DTA"
-    krname <- "ETKR81DT/ETKR81FL.DTA"
-    prname <- "ETPR81DT/ETPR81FL.DTA"
-    brname <- "ETBR81DT/ETBR81FL.DTA"
-
-  } else if (country == "Ethiopia" & year == 2016) {
-    irname <- "ETIR71DT/ETIR71FL.DTA"
-    krname <- "ETKR71DT/ETKR71FL.DTA"
-    prname <- "ETPR71DT/ETPR71FL.DTA"
-    brname <- "ETBR71DT/ETBR71FL.DTA"
-
-  } else if (country == "Kenya" & year == 2022) {
-    irname <- "KEIR8CDT/KEIR8CFL.DTA"
-    krname <- "KEKR8CDT/KEKR8CFL.DTA"
-    prname <- "KEPR8CDT/KEPR8CFL.DTA"
-    brname <- "KEBR8CDT/KEBR8CFL.DTA"
-
-  } else if (country == "Kenya" & year == 2014) {
-    irname <- "KEIR72DT/KEIR72FL.DTA"
-    krname <- "KEKR72DT/KEKR72FL.DTA"
-    prname <- "KEPR72DT/KEPR72FL.DTA"
-    brname <- "KEBR72DT/KEBR72FL.DTA"
-
-  } else if (country == "Mozambique" & year == 2022) {
-    irname <- "MZIR81DT/MZIR81FL.DTA"
-    krname <- "MZKR81DT/MZKR81FL.DTA"
-    prname <- "MZPR81DT/MZPR81FL.DTA"
-    brname <- "MZBR81DT/MZBR81FL.DTA"
-
-  } else if (country == "Mozambique" & year == 2011) {
-    irname <- "MZIR62DT/MZIR62FL.DTA"
-    krname <- "MZKR62DT/MZKR62FL.DTA"
-    prname <- "MZPR62DT/MZPR62FL.DTA"
-    brname <- "MZBR62DT/MZBR62FL.DTA"
-
-  } else if (country == "Rwanda" & year == 2019) {
-    irname <- "RWIR81DT/RWIR81FL.DTA"
-    krname <- "RWKR81DT/RWKR81FL.DTA"
-    prname <- "RWPR81DT/RWPR81FL.DTA"
-    brname <- "RWBR81DT/RWBR81FL.DTA"
-
-  } else if (country == "Rwanda" & year == 2014) {
-    irname <- "RWIR70DT/RWIR70FL.DTA"
-    krname <- "RWKR70DT/RWKR70FL.DTA"
-    prname <- "RWPR70DT/RWPR70FL.DTA"
-    brname <- "RWBR70DT/RWBR70FL.DTA"
-
-  } else if (country == "Senegal" & year == 2019) {
-    irname <- "SNIR8BDT/SNIR8BFL.DTA"
-    krname <- "SNKR8BDT/SNKR8BFL.DTA"
-    prname <- "SNPR8BDT/SNPR8BFL.DTA"
-    brname <- "SNBR8BDT/SNBR8BFL.DTA"
-
-  } else if (country == "Senegal" & year == 2023) {
-    irname <- "SNIR8RDT/SNIR8RFL.DTA"
-    krname <- "SNKR8RDT/SNKR8RFL.DTA"
-    prname <- "SNPR8RDT/SNPR8RFL.DTA"
-    brname <- "SNBR8RDT/SNBR8RFL.DTA"
-
-  } else if (country == "South Africa" & year == 2016) {
-    irname <- "ZAIR71DT/ZAIR71FL.DTA"
-    krname <- "ZAKR71DT/ZAKR71FL.DTA"
-    prname <- "ZAPR71DT/ZAPR71FL.DTA"
-    brname <- "ZABR71DT/ZABR71FL.DTA"
-
-  } else if (country == "Tanzania" & year == 2022) {
-    irname <- "TZIR82DT/TZIR82FL.DTA"
-    krname <- "TZKR82DT/TZKR82FL.DTA"
-    prname <- "TZPR82DT/TZPR82FL.DTA"
-    brname <- "TZBR82DT/TZBR82FL.DTA"
-
-  } else if (country == "Tanzania" & year == 2015) {
-    irname <- "TZIR7BDT/TZIR7BFL.DTA"
-    krname <- "TZKR7BDT/TZKR7BFL.DTA"
-    prname <- "TZPR7BDT/TZPR7BFL.DTA"
-    brname <- "TZBR7BDT/TZBR7BFL.DTA"
-  }  else if (country == "Sierra Leone" & year == 2013) {
-    irname <- "SLIR61DT/SLIR61FL.DTA"
-    krname <- "SLKR61DT/SLKR61FL.DTA"
-    prname <- "SLPR61DT/SLPR61FL.DTA"
-    brname <- "SLBR61DT/SLBR61FL.DTA"
-  }  else if (country == "Sierra Leone" & year == 2019) {
-    irname <- "SLIR7ADT/SLIR7AFL.DTA"
-    krname <- "SLKR7ADT/SLKR7AFL.DTA"
-    prname <- "SLPR7ADT/SLPR7AFL.DTA"
-    brname <- "SLBR7ADT/SLBR7AFL.DTA"
-  }  else if (country == "Mali" & year == 2018) {
-    irname <- "MLIR7ADT/MLIR7AFL.DTA"
-    krname <- "MLKR7ADT/MLKR7AFL.DTA"
-    prname <- "MLPR7ADT/MLPR7AFL.DTA"
-    brname <- "MLBR7ADT/MLBR7AFL.DTA"
-  }  else if (country == "Mali" & year == 2023) {
-    irname <- "MLIR8ADT/MLIR8AFL.DTA"
-    krname <- "MLKR8ADT/MLKR8AFL.DTA"
-    prname <- "MLPR8ADT/MLPR8AFL.DTA"
-    brname <- "MLBR8ADT/MLBR8AFL.DTA"
-  }   else {
-    stop("No match found for this country and year.")
-  }
-
-  return(list(irname = irname, krname = krname, prname = prname, brname = brname))
-}
-
-get_dhs_for_indicator <- function(ind,country,year,irname,prname,krname,brname) {
-  .dhs_cache <- new.env(parent = emptyenv())
-
-  recode <- infolist$recode[
-    infolist$ID == ind
-  ]
-
-  if (length(recode) == 0 || is.na(recode)) stop("No recode for indicator: ", ind)
-
-  if (!exists(recode, envir = .dhs_cache)) {
-    fp <- switch(
-      recode,
-      IR = paste0(source_path,"Gates-data/rawDHS/",country,"/",year,"/",irname),
-      KR = paste0(source_path,"Gates-data/rawDHS/",country,"/",year,"/",krname),
-      PR = paste0(source_path,"Gates-data/rawDHS/",country,"/",year,"/",prname),
-      BR = paste0(source_path,"Gates-data/rawDHS/",country,"/",year,"/",brname),
-
-      stop("Unknown recode: ", recode)
-    )
-    message("Reading DHS (", recode, "): ", fp)
-    assign(recode, as.data.frame(haven::read_dta(fp)), envir = .dhs_cache)
-  }
-  get(recode, envir = .dhs_cache)
-}
-
-savedata_one_indicator <- function(ind) {
-  message("\n=== Indicator: ", ind, " ===")
-  dhsData=NULL
-  dhsData <- get_dhs_for_indicator(ind= ind,
-                                   country=country,
-                                   year=year,
-                                   irname=irname,
-                                   prname=prname,
-                                   krname=krname,
-                                   brname=brname)
-  data    <- surveyPrev::getDHSindicator(dhsData, indicator = ind)
-
-
-  # data.info<-surveyPrev::datainfo(
-  #   data = data,
-  #   cluster.info = cluster.info,
-  #   admin.info1 = admin.info1,
-  #   admin.info2 = admin.info2
-  # )
-
-
-
-  out <- file.path(results_path, paste0(ind, ".qs"))
-  qs::qsave(data, file = out)
-# 
-#   out1 <- file.path(results_path, paste0(ind,"_info", ".qs"))
-#   qs::qsave(data.info, file = out1)
-#   message("Saved: ", out)
-#   invisible(out)
-}
-
+#
+# This script prepares survey data for each indicator.  This file reads basic.Rdata and loops over all indicators to produce data
+#
+#
 
 library(sf)
 library(ggplot2)
@@ -216,40 +23,35 @@ library(INLA)
 
 
 
-#step 1.2
-#prepare data for each indicator
-
-
-
 library(here)
-setwd("/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-data")
-source_path<- here::here()
-infolist <- read.csv(here(source_path, "infolist.csv"))
-surveys <- read.csv(here(source_path, "surveyslist.csv"))
+# source_path is the folder where this github repository lives in 
+source_path <- dirname(here::here())
+# source_path is the path for this github repository 
+git_path <- here::here()
+source(here(git_path, "prep/prepare_functions.R"))
 
-
-
-source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
-infolist <- read.csv(file.path(source_path, "infolist.csv"))
-surveys <- read.csv(file.path(source_path, "surveyslist.csv"))
+# Read in the list of indicators and surveys from the spreadsheet
+infolist <- read.csv(here(git_path, "info", "infolist.csv"))
+surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
 indicatorlist=infolist$ID
 
 
-countryList="Tanzania"
-countryList="Sierra Leone"
-countryList="Nigeria"
-
-
-
 countryList=c("Burkina Faso" ,
-              "Congo Democratic Republic", "Ethiopia",
-              "Kenya", "Mozambique",
-              "Rwanda","Senegal" ,  
-              "South Africa","Tanzania"
-)
+              "Congo Democratic Republic", 
+              "Ethiopia",
+              "Kenya", 
+              "Mozambique",
+              "Nigeria", 
+              "Rwanda",
+              "Senegal" ,  
+              "Sierra Leone", 
+              "Tanzania", 
+              # 11/2025 new countries
+              "Mali",
+              "Zambia",
+              "South Africa")
 
-countryList=c("Sierra Leone","Mali"
-)
+ 
 # to loop over all countries 1:seq_len(nrow(surveys))
 # to loop over one country which(surveys$country %in% country)
 # to loop over all indicator indicatorlist=infolist$ID
@@ -278,22 +80,20 @@ for (i in which(surveys$country %in% countryList) ) {
   prname<-fn$prname
   brname<-fn$brname
 
-   message(sprintf("\n--- work on %s %s (%s) ---", country, year, survey_name,
-                  irname,krname,prname,brname   ))
+  message(sprintf("\n--- work on %s %s (%s) ---", country, year, survey_name))
 
 
 # ---- run for all indicators ----
 for (indicator in indicatorlist) {
   tryCatch(
-    savedata_one_indicator(indicator),
+    savedata_one_indicator(indicator, country, year,irname,prname,krname,brname,
+    infolist, source_path),
     error = function(e) {
       message("Failed indicator ", indicator, ": ", conditionMessage(e))
     }
   )
   gc()
 }
-
-
 }
 
 
