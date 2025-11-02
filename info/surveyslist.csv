@@ -1,0 +1,26 @@
+country,year,country_short,survey_name,upper_name,lower_name,iso3
+Nigeria,2024,NG,NG2024DHS,States,LGA,NGA
+Nigeria,2018,NG,NG2018DHS,States,LGA,NGA
+Burkina Faso,2021,BF,BF2021DHS,Regions,Provinces,BFA
+Burkina Faso,2010,BF,BF2010DHS,Regions,Provinces,BFA
+Congo Democratic Republic,2023,CD,CD2023DHS,Provinces,Territories,COD
+Congo Democratic Republic,2013,CD,CD2013DHS,Provinces,Territories,COD
+Ethiopia,2019,ET,ET2019DHS,Regions,Zones,ETH
+Ethiopia,2016,ET,ET2016DHS,Regions,Zones,ETH
+Kenya,2022,KE,KE2022DHS,Counties,Sub-counties,KEN
+Kenya,2014,KE,KE2014DHS,Counties,Sub-counties,KEN
+Mozambique,2022,MZ,MZ2022DHS,Provinces,Districts,MOZ
+Mozambique,2011,MZ,MZ2011DHS,Provinces,Districts,MOZ
+Rwanda,2019,RW,RW2019DHS,Provinces,Districts,RWA
+Rwanda,2014,RW,RW2015DHS,Provinces,Districts,RWA
+Senegal,2019,SN,SN2019DHS,Regions,Departments,SEN
+Senegal,2023,SN,SN2023DHS,Regions,Departments,SEN
+South Africa,2016,ZA,ZA2016DHS,,,ZAF
+Tanzania,2015,TZ,TZ2015DHS,Regions,Districts,TZA
+Tanzania,2022,TZ,TZ2022DHS,Regions,Districts,TZA
+Mali,2018,ML,ML2018DHS,,,MLI
+Mali,2023,ML,ML2023DHS,,,MLI
+Zambia,2018,ZM,ZM2018DHS,,,ZMB
+Zambia,2024,ZM,ZM2024DHS,,,ZMB
+Sierra Leone,2013,SL,SL2013DHS,,,SLE
+Sierra Leone,2019,SL,SL2019DHS,,,SLE

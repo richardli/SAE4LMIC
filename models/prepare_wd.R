@@ -1,21 +1,20 @@
+#
+# This script sets the directories needed for the workflow for all countries & surveys
+# When a new survey/indicator is added, this script needs to be rerun
+#
 
-
+# The following set wd to be e.g.
+# setwd("/Users/qianyu/Dropbox/binary_code/pcg/GATES/")
 
 library(here)
+# source_path is the folder where this github repository lives in 
+source_path <- dirname(here::here())
+# source_path is the path for this github repository 
+git_path <- here::here()
+# Read in the list of indicators and surveys from the spreadsheet
+infolist <- read.csv(here(git_path, "info", "infolist.csv"))
+surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
 
-
-
-setwd("/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-data")
-source_path<- here::here()
-infolist <- read.csv(here(source_path, "infolist.csv"))
-surveys <- read.csv(here(source_path, "surveyslist.csv"))
-
-
-
-
-source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
-infolist <- read.csv(file.path(source_path, "infolist.csv"))
-surveys <- read.csv(file.path(source_path, "surveyslist.csv"))
 
 
 
