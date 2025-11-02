@@ -1,7 +1,12 @@
+#
+# This script prepares admin.info1, admin.info2, cluster.info for each survey and they are saved as basic.Rdata in Gates-results/Results/country/year. 
+# 
+# A map (cluster.info$map) used to check boundary alignment and cluster locations is saved under Gates-results/check/country/year. The wrong.points are printed in the title of each plot. These points should be the clusters without GPS information. The current version wrong.points are the ones which cannot be fixed in clusterinfo(). The fixed points are saved in cluster.info$fixed.points. 
+#
+# The second loop is to calculate numbers of Admin 1 and Admin 2 for each survey and will be saved as shapefileList.csv in folder Gates. 
 
-
-
-# Helper Function : try to detect geoname folder inside rawDHS/<country>/<year>/
+# Helper Function : 
+# try to detect geoname folder inside rawDHS/<country>/<year>/
 detect_geoname <- function(base_path, country, year, survey_name = NULL) {
   rawdir <- file.path(base_path, "rawDHS", country, as.character(year))
   if (!dir.exists(rawdir)) return(NULL)
@@ -37,7 +42,6 @@ library(qs)
 library(countrycode)
 # install_github("richardli/surveyPrev",force = T)
 # install_github("richardli/SUMMER")
-
 library(surveyPrev)
 library(SUMMER)
 library(INLA)
@@ -45,51 +49,38 @@ library(INLA)
 
 
 library(here)
-setwd("/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-data")
-source_path<- here::here()
-infolist <- read.csv(here(source_path, "infolist.csv"))
-surveys <- read.csv(here(source_path, "surveyslist.csv"))
+# source_path is the folder where this github repository lives in 
+source_path <- dirname(here::here())
+# source_path is the path for this github repository 
+git_path <- here::here()
+# Read in the list of indicators and surveys from the spreadsheet
+infolist <- read.csv(here(git_path, "info", "infolist.csv"))
+surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
 
 
-
-
-source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
-infolist <- read.csv(file.path(source_path, "infolist.csv"))
-surveys <- read.csv(file.path(source_path, "surveyslist.csv"))
-
-
-
-# surveys$iso3= countrycode(surveys$country, origin = "country.name", destination = "iso3c")
-# write.csv(surveys, file.path(source_path, "surveyslist.csv"), row.names = FALSE)
-# 
-
-
-
-
-
-countryList="Nigeria"
-countryList="Tanzania"
-countryList="Sierra Leone"
-countryList="Rwanda"
-countryList="Mali"
 countryList=c("Burkina Faso" ,
-              "Congo Democratic Republic", "Ethiopia",
-              "Kenya", "Mozambique",
-              "Rwanda","Senegal" ,  
-              "South Africa" ,"Mali" 
-)
+              "Congo Democratic Republic", 
+              "Ethiopia",
+              "Kenya", 
+              "Mozambique",
+              "Nigeria", 
+              "Rwanda",
+              "Senegal" ,  
+              "Sierra Leone", 
+              "Tanzania", 
+              # 11/2025 new countries
+              "Mali",
+              "Zambia",
+              "South Africa")
 
+#------------------------------------------------------------------#
+# Step 1.1
+# Prepare and save cluster.info, admin.info2, admin.info1,
+#  poly.adm1, poly.adm2, geo for each survey (2 each country)
+#------------------------------------------------------------------#
 
-#step 1.1
-#prepare and save cluster.info, admin.info2, admin.info1,
-#poly.adm1, poly.adm2, geo for each survey (2 each country)
-
-
-#loop all survey: seq_len(nrow(surveys))
-#loop one country: which(surveys$country %in% country)
-#loop some country which(surveys$country %in% countryList) 
-
-
+## Admin note: replace with only a subset of countries when updating
+country <- countryList[1:length(countryList)]
 
 
 for (i in which(surveys$country %in% country) ) {
@@ -294,7 +285,7 @@ summary_tbl$shapefile[which(summary_tbl$country=="Tanzania")]<-"GADM"
 summary_tbl$shapefile[which(summary_tbl$country=="Sierra Leone")]<-"WHO"
 
 
-write.csv(summary_tbl, file.path(source_path, "shapefileList.csv"), row.names = FALSE)
+write.csv(summary_tbl, file.path(git_path, "info/shapefileList.csv"), row.names = FALSE)
 
 
 
