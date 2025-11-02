@@ -5,29 +5,6 @@
 #
 # The second loop is to calculate numbers of Admin 1 and Admin 2 for each survey and will be saved as shapefileList.csv in folder Gates. 
 
-# Helper Function : 
-# try to detect geoname folder inside rawDHS/<country>/<year>/
-detect_geoname <- function(base_path, country, year, survey_name = NULL) {
-  rawdir <- file.path(base_path, "rawDHS", country, as.character(year))
-  if (!dir.exists(rawdir)) return(NULL)
-  subs <- list.dirs(rawdir, full.names = FALSE, recursive = FALSE)
-  # First try exact match with survey_name
-  if (!is.null(survey_name) && nzchar(survey_name)) {
-    m <- subs[grepl(survey_name, subs, ignore.case = TRUE)]
-    if (length(m) >= 1) {
-      return(m[1])
-    }
-  }
-  # Next, look for a subfolder that contains a shapefile named <sub>.shp
-  for (sub in subs) {
-    shp_path <- file.path(rawdir, sub, paste0(sub, ".shp"))
-    if (file.exists(shp_path)) return(sub)
-  }
-  # Fallback: if only one subfolder exists, return it
-  if (length(subs) == 1) return(subs[1])
-  return(NULL)
-}
-
 
 library(sf)
 library(ggplot2)
@@ -47,12 +24,13 @@ library(SUMMER)
 library(INLA)
 
 
-
 library(here)
 # source_path is the folder where this github repository lives in 
 source_path <- dirname(here::here())
 # source_path is the path for this github repository 
 git_path <- here::here()
+source(here(git_path, "prep/prepare_functions.R"))
+
 # Read in the list of indicators and surveys from the spreadsheet
 infolist <- read.csv(here(git_path, "info", "infolist.csv"))
 surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
