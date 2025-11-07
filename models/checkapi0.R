@@ -23,52 +23,53 @@ library(INLA)
 
 
 
-library(here)
-setwd("/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-data")
-source_path<- here::here()
-infolist <- read.csv(here(source_path, "infolist.csv"))
-surveys <- read.csv(here(source_path, "surveyslist.csv"))
+# source_path is the folder where this github repository lives in
+source_path <- dirname(here::here())
+# source_path is the path for this github repository
+git_path <- here::here()
 
+# Read in the list of indicators and surveys from the spreadsheet
+infolist <- read.csv(here(git_path, "info", "infolist.csv"))
+surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
+indicatorlist <- infolist$ID
 
-
-
-
-# source_path<-here::here()
-source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
-
-infolist <- read.csv(file.path(source_path, "infolist.csv"))
-surveys <- read.csv(file.path(source_path, "surveyslist.csv"))
-indicatorlist=infolist$ID
-
-
-#step 2.1  direct estimates
-# 
-# countryList="Tanzania"
-# countryList="Nigeria"
-# countryList="Sierra Leone"
-# 
-
-
-countryList=c("Burkina Faso" ,
-              "Congo Democratic Republic", 
-              "Ethiopia",
-              "Kenya", 
+countryList=c(
+  # "Burkina Faso" ,
+              # "Congo Democratic Republic",
+              # "Ethiopia",
+              "Kenya",
               "Mozambique",
               "Nigeria",
-              "Rwanda",
-              "Senegal" ,  
+              # "Rwanda",
+              "Senegal" ,
               "South Africa",
               "Tanzania",
               "Sierra Leone",
               "Mali"
 )
-countryList="Senegal"
+# countryList="Senegal"
 
-summary_df<-c()
-res_data_ad0<-list()
 
-all_results<-list()
+#
+# countryList<- unique(surveys$country)
+# countryList="Nigeria"
+
+# Ethiopia, Rwanda need to look separately
+
+countryList="Nigeria"
+countryList="Burkina Faso"
+countryList="Ethiopia"
+
+countryList=c("Mali","Sierra Leone")
+
+
+
+
 for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
+
+  summary_df<-c()
+  res_data_ad0<-list()
+  all_results<-list()
   country       <- surveys$country[i]
   year          <- surveys$year[i]
   country_short <- surveys$country_short[i]
@@ -76,7 +77,7 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
   version<-surveys$version[i]
   message("Processing survey: ", survey_name, " (", country, " ", year, ")")
 
-  results_path <- file.path(source_path, "Gates-results/Results", country, year)
+  results_path <- file.path(source_path, "/Gates-results/Results", country, year)
 
   # Load basic Rdata once per survey
   load(file.path(results_path, "basic.Rdata"))
@@ -84,7 +85,7 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
 
 
   if (country=="Rwanda"&year==2014){year=2015}
-  API0_PATH= paste0(source_path,"Gates-data/API/admin0/",country_short,"_",year,"_DHS_est.rda")
+  API0_PATH= paste0(source_path,"/Gates-data/API/admin0/",country_short,"_",year,"_DHS_est.rda")
   load(API0_PATH)
 
 
@@ -180,34 +181,36 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
           CI=0.9
         )
 
+
+
       # if (country %in% c("Sierra Leone","Rwanda")) {
-      # 
+      #
       #   res_adm0<-surveyPrev::directEST(
       #     data = data, cluster.info = cluster.info, admin = 0,
       #     admin.info = admin.info1, aggregation = FALSE, var.fix = TRUE,
       #     alt.strata = "v022",
       #     CI=0.9
       #   )
-      # 
-      # 
+      #
+      #
       # } else if(country == "Tanzania" && year== 2015){
-      # 
+      #
       #   res_adm0<-surveyPrev::directEST(
       #     data = data, cluster.info = cluster.info, admin = 0,
       #     admin.info = admin.info1, aggregation = FALSE, var.fix = TRUE,
       #     alt.strata = "v022",
       #     CI=0.9
       #   )
-      # 
-      # 
+      #
+      #
       # }else{
-      # 
+      #
       #   res_adm0<-surveyPrev::directEST(
       #     data = data, cluster.info = cluster.info, admin = 0,
       #     admin.info = admin.info1, aggregation = FALSE,
       #     CI=0.9
       #   )
-      # 
+      #
       # }
 
 
@@ -218,9 +221,9 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
 
       message("done: ", indicator, year)
 
-      
-      
-      
+
+
+
 
     }else {
       message("Missing ", indicator)
@@ -246,58 +249,65 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
       stringsAsFactors = FALSE
     )
 
-    
-    
-    
-    # combine into one data.frame
-    summary_df <- dplyr::bind_rows(all_results)
-    
-    
-    summary_df$diff=summary_df$surveyPrev-summary_df$API
-    summary_df$match=as.integer(abs(summary_df$diff) < 0.01)
-    
-    PLOTSET=summary_df[summary_df$indicator != "HC_WIXQ_P_12Q", ]
-    
-    tol <- 0.01
-    
-    checkplot<-ggplot(PLOTSET, aes(x = API, y = surveyPrev)) +
-      geom_point(aes(color = abs(diff) < 0.01), size = 1) +
-      geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray40") +
-      geom_ribbon(
-        aes(x = API, ymin = API - tol, ymax = API + tol),
-        fill = "lightblue", alpha = 0.2, inherit.aes = FALSE
-      )+
-      labs(
-        x = "API ",
-        y = "surveyPrev ",
-        color = "diff < 0.01"
-      ) +
-      coord_equal() +
-      theme_bw()
-    
-    
-    
-    
-    
-    out0 <- file.path(source_path,  "Gates-results/Results" ,country,paste0( "dir-ad0", ".qs"))
-    qs::qsave(res_data_ad0, file = out0)
-    
-    
-    
 
-    
-    write.csv(summary_df, file.path(source_path, "Gates-results/check", country ,paste0(country,"Checkapi0.csv")), row.names = FALSE)
-    
-    
-    
-    ggsave(checkplot ,
-           filename = file.path(source_path, "Gates-results/check",country, paste0(country,"check-national.png")),
-           
-           width = 10, height = 10,
-           dpi = 300)
-    
+
 
   }
+
+
+
+
+
+  # combine into one data.frame
+  summary_df <- dplyr::bind_rows(all_results)
+
+
+  summary_df$diff=summary_df$surveyPrev-summary_df$API
+  summary_df$match=as.integer(abs(summary_df$diff) < 0.01)
+
+  PLOTSET=summary_df[summary_df$indicator != "HC_WIXQ_P_12Q", ]
+
+  tol <- 0.01
+
+  checkplot<-ggplot(PLOTSET, aes(x = API, y = surveyPrev)) +
+    geom_point(aes(color = abs(diff) < 0.01), size = 1,alpha=.8) +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray40") +
+    geom_ribbon(
+      aes(x = API, ymin = API - tol, ymax = API + tol),
+      fill = "lightblue", alpha = 0.2, inherit.aes = FALSE
+    ) +
+    scale_color_manual(
+      values = c("FALSE" = "red", "TRUE" = "blue"),
+      labels = c("FALSE" = "Outside", "TRUE" = "Within 0.01")
+    ) +
+    labs(
+      x = "API",
+      y = "surveyPrev",
+      color = "check"
+    ) +
+    coord_equal() +
+    theme_bw()
+
+
+
+
+  out0 <- file.path(source_path,  "Gates-results/Results" ,country,year,paste0( "dir-ad0", ".qs"))
+  qs::qsave(res_data_ad0, file = out0)
+
+
+
+
+
+  write.csv(summary_df, file.path(source_path, "Gates-results/check", country,year,paste0(country,"Checkapi0.csv")), row.names = FALSE)
+
+
+
+  ggsave(checkplot ,
+         filename = file.path(source_path, "Gates-results/check",country,year, paste0(country,"check-national.png")),
+
+         width = 10, height = 10,
+         dpi = 300)
+
 
 
 }

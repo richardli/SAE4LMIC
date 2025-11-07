@@ -30,3 +30,9 @@ infolist <- read.csv(here(git_path, "info", "infolist.csv"))
 surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
 indicatorlist <- infolist$ID
 
+
+
+
+
+
+

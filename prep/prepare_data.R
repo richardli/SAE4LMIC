@@ -24,9 +24,9 @@ library(INLA)
 
 
 library(here)
-# source_path is the folder where this github repository lives in 
+# source_path is the folder where this github repository lives in
 source_path <- dirname(here::here())
-# source_path is the path for this github repository 
+# source_path is the path for this github repository
 git_path <- here::here()
 source(here(git_path, "prep/prepare_functions.R"))
 
@@ -37,27 +37,27 @@ indicatorlist=infolist$ID
 
 
 countryList=c("Burkina Faso" ,
-              "Congo Democratic Republic", 
+              "Congo Democratic Republic",
               "Ethiopia",
-              "Kenya", 
+              "Kenya",
               "Mozambique",
-              "Nigeria", 
+              "Nigeria",
               "Rwanda",
-              "Senegal" ,  
-              "Sierra Leone", 
-              "Tanzania", 
+              "Senegal" ,
+              "Sierra Leone",
+              "Tanzania",
               # 11/2025 new countries
               "Mali",
-              "Zambia",
+              # "Zambia",
               "South Africa")
 
- 
+
 # to loop over all countries 1:seq_len(nrow(surveys))
 # to loop over one country which(surveys$country %in% country)
 # to loop over all indicator indicatorlist=infolist$ID
 # to loop over some indicators indicatorlist<-c("RH_DELP_C_HOT") #"RH_DELP_C_DHT", "RH_DELP_C_PUT","RH_DELP_C_PRT",
 
-
+indicatorlist="ML_NETC_C_ITN"
 
 for (i in which(surveys$country %in% countryList) ) {
 

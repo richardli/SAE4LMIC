@@ -11,9 +11,9 @@ countryList=c("Burkina Faso" ,
               "Nigeria", 
               "Rwanda",
               "Senegal" ,  
-              "Sierra Leone", 
               "Tanzania", 
               # 11/2025 new countries
+              "Sierra Leone", 
               "Mali",
               "Zambia",
               "South Africa")

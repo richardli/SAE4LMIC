@@ -183,7 +183,7 @@ for (i in which(surveys$country %in% country) ) {
     ggsave(    
       cluster.info$map+
         labs( title = cluster.info$wrong.points ) ,
-           filename = file.path(source_path, "Gates-results/check",country, year, "check-bountry.png"),
+           filename = file.path(source_path, "Gates-results/check",country, year, paste0(country,"_",year,".png")),
            width = 10, height = 10,
            dpi = 300)
     
