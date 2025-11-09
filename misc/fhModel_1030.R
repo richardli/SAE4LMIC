@@ -121,7 +121,7 @@ fhModel_1030 <- function(data, cluster.info, admin.info = NULL, X= NULL, nested=
     #model
     
     if(var.fix==TRUE){
-      fit0 <- directEST_new(data = data,
+      fit0 <- directEST_1030(data = data,
                                     cluster.info = cluster.info,
                                     admin = 2,
                                     aggregation = FALSE,
