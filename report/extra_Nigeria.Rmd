@@ -1,0 +1,419 @@
+---
+title: "Multi-Indicator Small Area Estimation"
+subtitle: "`r params$country`"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  bookdown::pdf_book:
+    toc: true
+    number_sections: false
+    keep_tex: true
+header-includes:
+  - '\usepackage{graphicx}'
+  - '\usepackage{float}'
+  - '\setcounter{tocdepth}{2}'
+  - '\usepackage{caption}'
+  - '\captionsetup[table]{position=bottom}'
+params:
+  country: "Nigeria" 
+  source_path: "/Users/qianyu/Dropbox/binary_code/pcg/GATES"
+  middle_path: "Gates-results/ReportPlots"
+---
+\clearpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, message = FALSE, warning = FALSE,
+  fig.align = "center", comment = NA, cache = FALSE
+)
+library(knitr)
+
+```
+
+```{r}
+# devtools::install_github("wu-thomas/sae4health")
+library(geodata)
+library(sf)
+library(SUMMER)
+library(survey)
+library(rdhs)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(tidyr)
+library(kableExtra)
+library(terra)
+library(raster)
+library(surveyPrev)
+library(qs)
+library(knitr)
+library(sae4health)
+library(rmapshaper)
+```
+
+
+```{r}
+source_path<-params$source_path
+country=params$country
+middle_path=params$middle_path
+git_path<- file.path(source_path,"SAE4LMIC")
+infolist <- read.csv(file.path(git_path, "info", "infolist.csv"))
+surveys <- read.csv(file.path(git_path,  "info", "surveyslist.csv"))
+shapeused<- read.csv(file.path(git_path,  "info", "shapefileList.csv"))
+
+```
+
+```{r}
+
+yr1=min(shapeused[shapeused$country==country,]$year)
+yr2=max(shapeused[shapeused$country==country,]$year)
+
+
+c1=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_geo_cluster
+c2=shapeused[shapeused$country==country& shapeused$year==yr2,]$n_geo_cluster
+c11=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_cluster
+c22=shapeused[shapeused$country==country& shapeused$year==yr2,]$n_cluster
+
+
+
+ad11=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_admin1
+ad12=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_admin2
+indicatorlist=infolist$ID
+```
+
+```{r}
+
+image_dir <- normalizePath(file.path(source_path, middle_path, params$country),
+                           winslash = "/", mustWork = TRUE)
+
+files <- sort(list.files(path = image_dir,
+                         pattern = "^ad1_map_.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+files_2 <- sort(list.files(path = image_dir,
+                         pattern = "^ad2_map_.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+files_3 <- sort(list.files(path = image_dir,
+                         pattern = "^overlay-.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+files_4 <- sort(list.files(path = image_dir,
+                         pattern = "^scatter-.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+
+
+files_5 <- sort(list.files(path = image_dir,
+                         pattern = "^ridge_.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+files_6 <- sort(list.files(path = image_dir,
+                         pattern = "^interval-ad1-.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+files_7 <- sort(list.files(path = image_dir,
+                         pattern = "^interval-ad2-.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+files_yr1 <- sort(list.files(
+  path       = image_dir,
+  pattern    = paste0("^Basic-.*-", yr1, "\\.png$"),
+  full.names = TRUE,
+  recursive  = FALSE
+))
+
+files_yr2 <- sort(list.files(
+  path       = image_dir,
+  pattern    = paste0("^Basic-.*-", yr2, "\\.png$"),
+  full.names = TRUE,
+  recursive  = FALSE
+))
+
+```
+
+
+## Overview 
+
+This report presents extra infomation on:
+
+- **Clsuter**  
+- **API check**  
+- **Variance fix**  
+
+
+## Clsuter information
+
+DHS surveys included `r c1 ` clusters in `r yr1` and `r c2 ` clusters in `r yr2` from geo data, after removing clusters with no GPS information, there are  `r c11 ` clusters in `r yr2` and `r c22 ` clusters in `r yr1`. The maps show cluster locations for `r yr1` and `r yr2`
+
+
+
+
+ 
+```{r, echo = FALSE, out.width = "80%", fig.cap = "cluster locations and shapefiles (Baseline) "}
+check_dir <-file.path(source_path, "Gates-results/check")
+knitr::include_graphics(file.path(check_dir,country, yr1,paste0(country,"_",yr1,".png")))
+```
+
+
+```{r, echo = FALSE, out.width = "80%", fig.cap = "cluster locations and shapefiles (Latest)"}
+check_dir <-file.path(source_path, "Gates-results/check")
+knitr::include_graphics(file.path(check_dir,country, yr2,paste0(country,"_",yr2,".png")))
+```
+
+
+
+\newpage
+
+```{r }
+
+tab=read.csv(file.path(source_path,"Gates-results/estimates", country, "National_clusters.csv"))
+pretty_names <- gsub("\\.", " ", names(tab)) 
+tab <- tab %>%
+   dplyr::left_join(
+    infolist %>%  dplyr::select(Indicator = Description, Group, ID),
+    by = "Indicator"
+  ) %>%
+  dplyr:: arrange(Group, ID) %>%  # change Indicator to another column if needed
+ dplyr:: select(-ID)
+# order groups like your sidebar and sort rows
+group_order <- c("Child Health", "Maternal Health", "Outcomes",  "Social determinants")
+tab2 <- tab %>%
+  mutate(group = factor(Group, levels = group_order)) %>%
+  arrange(group, Indicator)
+tab2$Indicator[4]="Percentage of children 12-23 months who had received MCV 1"
+# row counts per group for pack_rows()
+idx <- table(tab2$group)
+
+
+# pretty column names (remove dots)
+# pretty_names <- c("Indicator", "DHS 2013", "DHS 2018")
+
+
+pretty_names <- c("Indicator", paste0("DHS ", yr1), paste0("DHS ", yr2))
+
+kable(tab2[1:3], #%>% dplyr::select(Indicator, DHS.2013, DHS.2018),
+      col.names = pretty_names,
+      align = c("l", "r", "r"),
+      booktabs = TRUE, caption = "Number of clusters")%>%  # ) 
+kable_styling(latex_options = "hold_position",
+                position = "center", 
+              
+              full_width = FALSE, 
+              stripe_color = "gray!10") %>%
+  row_spec(0, bold = TRUE) %>%
+  add_header_above(c(" " = 1, "Survey Year" = 2)) %>%
+  pack_rows(index = idx)   # <— adds “Child Health”, “Characteristics”, “Maternal Health” sections
+
+
+
+
+```
+
+
+\newpage
+
+```{r }
+
+tab=read.csv(file.path(source_path,"Gates-results/estimates", country, "National_samples.csv"))
+pretty_names <- gsub("\\.", " ", names(tab)) 
+tab <- tab %>%
+   dplyr::left_join(
+    infolist %>%  dplyr::select(Indicator = Description, Group, ID),
+    by = "Indicator"
+  ) %>%
+  dplyr:: arrange(Group, ID) %>%  # change Indicator to another column if needed
+ dplyr:: select(-ID)
+# order groups like your sidebar and sort rows
+group_order <- c("Child Health", "Maternal Health", "Outcomes",  "Social determinants")
+tab2 <- tab %>%
+  mutate(group = factor(Group, levels = group_order)) %>%
+  arrange(group, Indicator)
+tab2$Indicator[4]="Percentage of children 12-23 months who had received MCV 1"
+# row counts per group for pack_rows()
+idx <- table(tab2$group)
+
+
+# pretty column names (remove dots)
+# pretty_names <- c("Indicator", "DHS 2013", "DHS 2018")
+
+
+pretty_names <- c("Indicator", paste0("DHS ", yr1), paste0("DHS ", yr2))
+
+kable(tab2[1:3], #%>% dplyr::select(Indicator, DHS.2013, DHS.2018),
+      col.names = pretty_names,
+      align = c("l", "r", "r"),
+      booktabs = TRUE, caption = "Number of samples")%>%  # ) 
+kable_styling(latex_options = "hold_position",
+                position = "center", 
+              
+              full_width = FALSE, 
+              stripe_color = "gray!10") %>%
+  row_spec(0, bold = TRUE) %>%
+  add_header_above(c(" " = 1, "Survey Year" = 2)) %>%
+  pack_rows(index = idx)   # <— adds “Child Health”, “Characteristics”, “Maternal Health” sections
+
+
+
+
+```
+
+\newpage
+
+```{r }
+
+tab=read.csv(file.path(source_path,"Gates-results/estimates", country, "National_events.csv"))
+pretty_names <- gsub("\\.", " ", names(tab)) 
+tab <- tab %>%
+   dplyr::left_join(
+    infolist %>%  dplyr::select(Indicator = Description, Group, ID),
+    by = "Indicator"
+  ) %>%
+  dplyr:: arrange(Group, ID) %>%  # change Indicator to another column if needed
+ dplyr:: select(-ID)
+# order groups like your sidebar and sort rows
+group_order <- c("Child Health", "Maternal Health", "Outcomes",  "Social determinants")
+tab2 <- tab %>%
+  mutate(group = factor(Group, levels = group_order)) %>%
+  arrange(group, Indicator)
+tab2$Indicator[4]="Percentage of children 12-23 months who had received MCV 1"
+# row counts per group for pack_rows()
+idx <- table(tab2$group)
+
+
+# pretty column names (remove dots)
+# pretty_names <- c("Indicator", "DHS 2013", "DHS 2018")
+
+
+pretty_names <- c("Indicator", paste0("DHS ", yr1), paste0("DHS ", yr2))
+
+kable(tab2[1:3], #%>% dplyr::select(Indicator, DHS.2013, DHS.2018),
+      col.names = pretty_names,
+      align = c("l", "r", "r"),
+      booktabs = TRUE, caption = "Number of events")%>%  # ) 
+kable_styling(latex_options = "hold_position",
+                position = "center", 
+              
+              full_width = FALSE, 
+              stripe_color = "gray!10") %>%
+  row_spec(0, bold = TRUE) %>%
+  add_header_above(c(" " = 1, "Survey Year" = 2)) %>%
+  pack_rows(index = idx)   # <— adds “Child Health”, “Characteristics”, “Maternal Health” sections
+
+
+
+
+```
+
+
+
+
+\newpage
+## API check
+
+The plots show Naitonal check for each indicator in both surveys.
+
+```{r,fig.show = "hold", echo = FALSE, out.width = "45%", fig.cap = "API check (Left: Baseline, Right: Latest)"}
+check_dir <-file.path(source_path, "Gates-results/check")
+
+knitr::include_graphics(file.path(check_dir,country, yr1,paste0(country,"check-national.png")))
+
+knitr::include_graphics(file.path(check_dir,country, yr2,paste0(country,"check-national.png")))
+
+
+```
+
+
+
+\newpage
+## Variance fix
+
+```{r}
+
+image_dir1 <- normalizePath(file.path(source_path, "Gates-results/check", params$country,yr1),
+                           winslash = "/", mustWork = TRUE)
+
+files1 <- sort(list.files(path = image_dir1,
+                         pattern = "-check-var\\.fix\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+files2 <- sort(list.files(path = image_dir1,
+                         pattern = "-check-var-fh\\.fix\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+image_dir2 <- normalizePath(file.path(source_path, "Gates-results/check", params$country,yr2),
+                           winslash = "/", mustWork = TRUE)
+
+
+files3<- sort(list.files(path = image_dir2,
+                         pattern = "-check-var\\.fix\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+files4 <- sort(list.files(path = image_dir2,
+                         pattern = "-check-var-fh\\.fix\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+
+```
+
+
+
+```{r, echo=FALSE, results='asis' , out.width='\\ linewidth'}
+latex_img <- function(p, width="\\linewidth") {
+  if (length(p) == 0 || is.na(p) || !nzchar(p) || !file.exists(p)) {
+    cat(sprintf("\\textit{(missing file) %s}\\\\\n\n", ifelse(length(p), p, "")))
+    return(invisible())
+  }
+  cat(sprintf("\\begin{center}\\includegraphics[width=%s]{%s}\\end{center}\n\n",
+              width, p))
+}
+
+
+
+indicatorlists=indicatorlist
+for (i in seq_along(indicatorlists)) {
+  cat("\\newpage\n\n")
+
+id  <- indicatorlists[i]
+#def <- infolist$Full_definition[infolist$ID == id]
+short <- infolist$Description[infolist$ID == id]
+cat(sprintf("## %s\n\n", short))
+#cat(sprintf("`%s`: %s\n\n", id, def))
+  cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+
+    cat("\\textbf{scatter plot for direct estimates (Baseline)}\n\n")
+  if (i <= length(files1))   latex_img(files1[i], ".9\\linewidth")
+  
+     cat("\\textbf{scatter plot for Fay–Herriot (Baseline)}\n\n")
+  if (i <= length(files2))   latex_img(files2[i], ".9\\linewidth")
+    
+  
+   cat("\\newpage\n\n")
+
+    cat("\\textbf{scatter plot for direct estimates  (Latest)}\n\n")
+  if (i <= length(files3))   latex_img(files3[i], ".9\\linewidth")
+  
+     cat("\\textbf{scatter plot for Fay–Herriot  (Latest)}\n\n")
+  if (i <= length(files4))   latex_img(files4[i], ".9\\linewidth")
+    
+}
+```
+
+
+

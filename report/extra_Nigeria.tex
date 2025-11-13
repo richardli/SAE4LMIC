@@ -1,0 +1,782 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{graphicx}
+\usepackage{float}
+\setcounter{tocdepth}{2}
+\usepackage{caption}
+\captionsetup[table]{position=bottom}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Multi-Indicator Small Area Estimation},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Multi-Indicator Small Area Estimation}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Nigeria}
+\author{}
+\date{\vspace{-2.5em}November 13, 2025}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\clearpage
+
+\subsection{Overview}\label{overview}
+
+This report presents extra infomation on:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Clsuter}\\
+\item
+  \textbf{API check}\\
+\item
+  \textbf{Variance fix}
+\end{itemize}
+
+\subsection{Clsuter information}\label{clsuter-information}
+
+DHS surveys included 1389 clusters in 2018 and 1380 clusters in 2024 from geo data, after removing clusters with no GPS information, there are 1382 clusters in 2024 and 1380 clusters in 2018. The maps show cluster locations for 2018 and 2024
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{../../Gates-results/check/Nigeria/2018/Nigeria_2018} 
+
+}
+
+\caption{cluster locations and shapefiles (Baseline) }\label{fig:unnamed-chunk-5}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{../../Gates-results/check/Nigeria/2024/Nigeria_2024} 
+
+}
+
+\caption{cluster locations and shapefiles (Latest)}\label{fig:unnamed-chunk-6}
+\end{figure}
+
+\newpage
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:unnamed-chunk-7}Number of clusters}
+\centering
+\begin{tabular}[t]{lrr}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Survey Year} \\
+\cmidrule(l{3pt}r{3pt}){2-3}
+\textbf{Indicator} & \textbf{DHS 2018} & \textbf{DHS 2024}\\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Child Health}}\\
+\hspace{1em}Children 12-23 months with no vaccinations & 1325 & 1287\\
+\hspace{1em}Children under 5 who slept under an insecticide-treated net (ITN) & 1383 & 1375\\
+\hspace{1em}Diarrhea treatment & 950 & 931\\
+\hspace{1em}Percentage of children 12-23 months who had received MCV 1 & 1325 & 1287\\
+\hspace{1em}Percentage of the de jure population in the lowest or second wealth quintile & 1383 & 1381\\
+\hspace{1em}Stunting rate (Prevalence of stunted (HAZ < -2) children under five (0-59 months)) & 1376 & 1350\\
+\hspace{1em}Wasting rate (Prevalence of wasted (WHZ < -2) children under five (0-59 months)) & 1376 & 1350\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Maternal Health}}\\
+\hspace{1em}Antenatal visits for pregnancy: 4+ visits, 2 years preceding the survey & 1382 & 1365\\
+\hspace{1em}Assistance during delivery from a skilled provider, 2 years preceding the survey & 1382 & 1365\\
+\hspace{1em}Current use of any modern method of contraception (married women) & 1383 & 1379\\
+\hspace{1em}Newborn postnatal check up & 1382 & 1365\\
+\hspace{1em}Percentage of children 12-23 months who had received DPT 3 vaccination & 1325 & 1287\\
+\hspace{1em}Place of delivery: At home & 1382 & 1365\\
+\hspace{1em}Place of delivery: Health facility, 2 years preceding the survey & 1382 & 1365\\
+\hspace{1em}Place of delivery: private facility & 1382 & 1365\\
+\hspace{1em}Place of delivery: public facility & 1382 & 1365\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Outcomes}}\\
+\hspace{1em}Probability of dying in the first month of life in the five years preceding the survey & 1383 & 1376\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Social determinants}}\\
+\hspace{1em}Women who are literate & 1383 & 1381\\
+\hspace{1em}Women who own a mobile phone & 1383 & 1381\\
+\hspace{1em}Women with secondary or higher education & 1383 & 1381\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:unnamed-chunk-8}Number of samples}
+\centering
+\begin{tabular}[t]{lrr}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Survey Year} \\
+\cmidrule(l{3pt}r{3pt}){2-3}
+\textbf{Indicator} & \textbf{DHS 2018} & \textbf{DHS 2024}\\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Child Health}}\\
+\hspace{1em}Children 12-23 months with no vaccinations & 6036 & 4937\\
+\hspace{1em}Children under 5 who slept under an insecticide-treated net (ITN) & 31844 & 26782\\
+\hspace{1em}Diarrhea treatment & 3941 & 3390\\
+\hspace{1em}Percentage of children 12-23 months who had received MCV 1 & 6036 & 4937\\
+\hspace{1em}Percentage of the de jure population in the lowest or second wealth quintile & 187119 & 176045\\
+\hspace{1em}Stunting rate (Prevalence of stunted (HAZ < -2) children under five (0-59 months)) & 12320 & 10171\\
+\hspace{1em}Wasting rate (Prevalence of wasted (WHZ < -2) children under five (0-59 months)) & 12373 & 10275\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Maternal Health}}\\
+\hspace{1em}Antenatal visits for pregnancy: 4+ visits, 2 years preceding the survey & 12762 & 10433\\
+\hspace{1em}Assistance during delivery from a skilled provider, 2 years preceding the survey & 13246 & 10970\\
+\hspace{1em}Current use of any modern method of contraception (married women) & 28754 & 25639\\
+\hspace{1em}Newborn postnatal check up & 12695 & 10417\\
+\hspace{1em}Percentage of children 12-23 months who had received DPT 3 vaccination & 6036 & 4937\\
+\hspace{1em}Place of delivery: At home & 13246 & 10970\\
+\hspace{1em}Place of delivery: Health facility, 2 years preceding the survey & 13246 & 10970\\
+\hspace{1em}Place of delivery: private facility & 13246 & 10970\\
+\hspace{1em}Place of delivery: public facility & 13246 & 10970\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Outcomes}}\\
+\hspace{1em}Probability of dying in the first month of life in the five years preceding the survey & 33593 & 27554\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Social determinants}}\\
+\hspace{1em}Women who are literate & 41623 & 39050\\
+\hspace{1em}Women who own a mobile phone & 41623 & 39050\\
+\hspace{1em}Women with secondary or higher education & 41623 & 39050\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:unnamed-chunk-9}Number of events}
+\centering
+\begin{tabular}[t]{lrr}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Survey Year} \\
+\cmidrule(l{3pt}r{3pt}){2-3}
+\textbf{Indicator} & \textbf{DHS 2018} & \textbf{DHS 2024}\\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Child Health}}\\
+\hspace{1em}Children 12-23 months with no vaccinations & 1163 & 1476\\
+\hspace{1em}Children under 5 who slept under an insecticide-treated net (ITN) & 16125 & 10785\\
+\hspace{1em}Diarrhea treatment & 1563 & 1642\\
+\hspace{1em}Percentage of children 12-23 months who had received MCV 1 & 3213 & 2596\\
+\hspace{1em}Percentage of the de jure population in the lowest or second wealth quintile & 78034 & 67479\\
+\hspace{1em}Stunting rate (Prevalence of stunted (HAZ < -2) children under five (0-59 months)) & 4489 & 3751\\
+\hspace{1em}Wasting rate (Prevalence of wasted (WHZ < -2) children under five (0-59 months)) & 818 & 842\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Maternal Health}}\\
+\hspace{1em}Antenatal visits for pregnancy: 4+ visits, 2 years preceding the survey & 7108 & 5465\\
+\hspace{1em}Assistance during delivery from a skilled provider, 2 years preceding the survey & 5909 & 5307\\
+\hspace{1em}Current use of any modern method of contraception (married women) & 3364 & 4072\\
+\hspace{1em}Newborn postnatal check up & 4845 & 4709\\
+\hspace{1em}Percentage of children 12-23 months who had received DPT 3 vaccination & 2991 & 2691\\
+\hspace{1em}Place of delivery: At home & 7612 & 5848\\
+\hspace{1em}Place of delivery: Health facility, 2 years preceding the survey & 5430 & 5057\\
+\hspace{1em}Place of delivery: private facility & 1643 & 1898\\
+\hspace{1em}Place of delivery: public facility & 3787 & 3159\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Outcomes}}\\
+\hspace{1em}Probability of dying in the first month of life in the five years preceding the survey & 1260 & 1050\\
+\addlinespace[0.3em]
+\multicolumn{3}{l}{\textbf{Social determinants}}\\
+\hspace{1em}Women who are literate & 21884 & 23072\\
+\hspace{1em}Women who own a mobile phone & 22506 & 24758\\
+\hspace{1em}Women with secondary or higher education & 20914 & 22529\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\subsection{API check}\label{api-check}
+
+The plots show Naitonal check for each indicator in both surveys.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.45\linewidth]{../../Gates-results/check/Nigeria/2018/Nigeriacheck-national} \includegraphics[width=0.45\linewidth]{../../Gates-results/check/Nigeria/2024/Nigeriacheck-national} 
+
+}
+
+\caption{API check (Left: Baseline, Right: Latest)}\label{fig:unnamed-chunk-10}
+\end{figure}
+
+\newpage
+
+\subsection{Variance fix}\label{variance-fix}
+
+\newpage
+
+\subsection{Percentage of children 12-23 months who had received MCV 1 (Measles containing vaccine)}\label{percentage-of-children-12-23-months-who-had-received-mcv-1-measles-containing-vaccine}
+
+Percentage of children 12-23 months who had received MCV 1 (Measles containing vaccine)
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CH_DIAT_C_ORT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CH_DIAT_C_ORT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CH_DIAT_C_ORT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CH_DIAT_C_ORT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Children 12-23 months with no vaccinations}\label{children-12-23-months-with-no-vaccinations}
+
+Children 12-23 months with no vaccinations
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CH_VACC_C_DP3-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CH_VACC_C_DP3-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CH_VACC_C_DP3-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CH_VACC_C_DP3-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Children under 5 who slept under an insecticide-treated net (ITN)}\label{children-under-5-who-slept-under-an-insecticide-treated-net-itn}
+
+Children under 5 who slept under an insecticide-treated net (ITN)
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CH_VACC_C_MSL-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CH_VACC_C_MSL-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CH_VACC_C_MSL-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CH_VACC_C_MSL-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Stunting rate (Prevalence of stunted (HAZ \textless{} -2) children under five (0-59 months))}\label{stunting-rate-prevalence-of-stunted-haz--2-children-under-five-0-59-months}
+
+Stunting rate (Prevalence of stunted (HAZ \textless{} -2) children under five (0-59 months))
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CH_VACC_C_NON-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CH_VACC_C_NON-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CH_VACC_C_NON-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CH_VACC_C_NON-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Wasting rate (Prevalence of wasted (WHZ \textless{} -2) children under five (0-59 months))}\label{wasting-rate-prevalence-of-wasted-whz--2-children-under-five-0-59-months}
+
+Wasting rate (Prevalence of wasted (WHZ \textless{} -2) children under five (0-59 months))
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CM_ECMR_C_NNF-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CM_ECMR_C_NNF-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CM_ECMR_C_NNF-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CM_ECMR_C_NNF-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Percentage of the de jure population in the lowest or second wealth quintile}\label{percentage-of-the-de-jure-population-in-the-lowest-or-second-wealth-quintile}
+
+Percentage of the de jure population in the lowest or second wealth quintile
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CN_NUTS_C_HA2-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CN_NUTS_C_HA2-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CN_NUTS_C_HA2-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CN_NUTS_C_HA2-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Diarrhea treatment}\label{diarrhea-treatment}
+
+Diarrhea treatment
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CN_NUTS_C_WH2-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CN_NUTS_C_WH2-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CN_NUTS_C_WH2-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CN_NUTS_C_WH2-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Percentage of children 12-23 months who had received DPT 3 vaccination}\label{percentage-of-children-12-23-months-who-had-received-dpt-3-vaccination}
+
+Percentage of children 12-23 months who had received DPT 3 vaccination
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CO_MOBB_W_MOB-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/CO_MOBB_W_MOB-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CO_MOBB_W_MOB-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/CO_MOBB_W_MOB-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Current use of any modern method of contraception (married women)}\label{current-use-of-any-modern-method-of-contraception-married-women}
+
+Current use of any modern method of contraception (married women)
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/ED_EDUC_W_SEH-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/ED_EDUC_W_SEH-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/ED_EDUC_W_SEH-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/ED_EDUC_W_SEH-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Antenatal visits for pregnancy: 4+ visits, 2 years preceding the survey}\label{antenatal-visits-for-pregnancy-4-visits-2-years-preceding-the-survey}
+
+Antenatal visits for pregnancy: 4+ visits, 2 years preceding the survey
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/ED_LITR_W_LIT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/ED_LITR_W_LIT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/ED_LITR_W_LIT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/ED_LITR_W_LIT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Assistance during delivery from a skilled provider, 2 years preceding the survey}\label{assistance-during-delivery-from-a-skilled-provider-2-years-preceding-the-survey}
+
+Assistance during delivery from a skilled provider, 2 years preceding the survey
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/FP_CUSM_W_MOD-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/FP_CUSM_W_MOD-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/FP_CUSM_W_MOD-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/FP_CUSM_W_MOD-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Place of delivery: Health facility, 2 years preceding the survey}\label{place-of-delivery-health-facility-2-years-preceding-the-survey}
+
+Place of delivery: Health facility, 2 years preceding the survey
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/HC_WIXQ_P_12Q-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/HC_WIXQ_P_12Q-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/HC_WIXQ_P_12Q-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/HC_WIXQ_P_12Q-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Place of delivery: At home}\label{place-of-delivery-at-home}
+
+Place of delivery: At home
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/ML_NETC_C_ITN-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/ML_NETC_C_ITN-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/ML_NETC_C_ITN-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/ML_NETC_C_ITN-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Place of delivery: private facility}\label{place-of-delivery-private-facility}
+
+Place of delivery: private facility
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_ANCN_W_N4P-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_ANCN_W_N4P-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_ANCN_W_N4P-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_ANCN_W_N4P-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Place of delivery: public facility}\label{place-of-delivery-public-facility}
+
+Place of delivery: public facility
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELA_C_SKP-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELA_C_SKP-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELA_C_SKP-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELA_C_SKP-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Newborn postnatal check up}\label{newborn-postnatal-check-up}
+
+Newborn postnatal check up
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELP_C_DHT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELP_C_DHT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELP_C_DHT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELP_C_DHT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Probability of dying in the first month of life in the five years preceding the survey}\label{probability-of-dying-in-the-first-month-of-life-in-the-five-years-preceding-the-survey}
+
+Probability of dying in the first month of life in the five years preceding the survey
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELP_C_HOT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELP_C_HOT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELP_C_HOT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELP_C_HOT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Women with secondary or higher education}\label{women-with-secondary-or-higher-education}
+
+Women with secondary or higher education
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELP_C_PRT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELP_C_PRT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELP_C_PRT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELP_C_PRT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Women who are literate}\label{women-who-are-literate}
+
+Women who are literate
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELP_C_PUT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_DELP_C_PUT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELP_C_PUT-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_DELP_C_PUT-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\subsection{Women who own a mobile phone}\label{women-who-own-a-mobile-phone}
+
+Women who own a mobile phone
+
+\textbf{scatter plot for direct estimates (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_PCCT_C_DY2-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot (Baseline)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2018/RH_PCCT_C_DY2-check-var-fh.fix.png}\end{center}
+
+\newpage
+
+\textbf{scatter plot for direct estimates  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_PCCT_C_DY2-check-var.fix.png}\end{center}
+
+\textbf{scatter plot for Fay–Herriot  (Latest)}
+
+\begin{center}\includegraphics[width=.9\linewidth]{/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/check/Nigeria/2024/RH_PCCT_C_DY2-check-var-fh.fix.png}\end{center}
+
+\end{document}

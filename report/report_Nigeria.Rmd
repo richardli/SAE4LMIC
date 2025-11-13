@@ -1,0 +1,375 @@
+---
+title: "Multi-Indicator Small Area Estimation"
+subtitle: "`r params$country`"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  bookdown::pdf_book:
+    toc: true
+    number_sections: false
+    keep_tex: true
+header-includes:
+  - '\usepackage{graphicx}'
+  - '\usepackage{float}'
+  - '\setcounter{tocdepth}{2}'
+  - '\usepackage{caption}'
+  - '\captionsetup[table]{position=bottom}'
+params:
+  country: "Nigeria" 
+  source_path: "/Users/qianyu/Dropbox/binary_code/pcg/GATES"
+  middle_path: "Gates-results/ReportPlots"
+---
+\clearpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, message = FALSE, warning = FALSE,
+  fig.align = "center", comment = NA, cache = FALSE
+)
+library(knitr)
+
+```
+
+```{r}
+# devtools::install_github("wu-thomas/sae4health")
+library(geodata)
+library(sf)
+library(SUMMER)
+library(survey)
+library(rdhs)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(tidyr)
+library(kableExtra)
+library(terra)
+library(raster)
+library(surveyPrev)
+library(qs)
+library(knitr)
+library(sae4health)
+library(rmapshaper)
+```
+
+
+```{r}
+source_path<-params$source_path
+country=params$country
+middle_path=params$middle_path
+git_path<- file.path(source_path,"SAE4LMIC")
+infolist <- read.csv(file.path(git_path, "info", "infolist.csv"))
+surveys <- read.csv(file.path(git_path,  "info", "surveyslist.csv"))
+shapeused<- read.csv(file.path(git_path,  "info", "shapefileList.csv"))
+
+```
+
+```{r}
+
+yr1=min(shapeused[shapeused$country==country,]$year)
+yr2=max(shapeused[shapeused$country==country,]$year)
+
+
+c1=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_geo_cluster
+c2=shapeused[shapeused$country==country& shapeused$year==yr2,]$n_geo_cluster
+
+
+
+ad11=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_admin1
+ad12=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_admin2
+indicatorlist=infolist$ID
+```
+
+```{r}
+
+image_dir <- normalizePath(file.path(source_path, middle_path, params$country),
+                           winslash = "/", mustWork = TRUE)
+
+files <- sort(list.files(path = image_dir,
+                         pattern = "^ad1_map_.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+files_2 <- sort(list.files(path = image_dir,
+                         pattern = "^ad2_map_.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+files_3 <- sort(list.files(path = image_dir,
+                         pattern = "^overlay-.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+files_4 <- sort(list.files(path = image_dir,
+                         pattern = "^scatter-.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+
+
+files_5 <- sort(list.files(path = image_dir,
+                         pattern = "^ridge_.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+files_6 <- sort(list.files(path = image_dir,
+                         pattern = "^interval-ad1-.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+
+files_7 <- sort(list.files(path = image_dir,
+                         pattern = "^interval-ad2-.*\\.png$",
+                         full.names = TRUE,
+                         recursive = FALSE))
+
+files_yr1 <- sort(list.files(
+  path       = image_dir,
+  pattern    = paste0("^Basic-.*-", yr1, "\\.png$"),
+  full.names = TRUE,
+  recursive  = FALSE
+))
+
+files_yr2 <- sort(list.files(
+  path       = image_dir,
+  pattern    = paste0("^Basic-.*-", yr2, "\\.png$"),
+  full.names = TRUE,
+  recursive  = FALSE
+))
+
+
+
+
+
+
+```
+
+
+## Overview
+
+This report presents subnational prevalence estimates for `r length(indicatorlist)` indicators in `r country` using DHS data. A summary of all indicators and survey information is provided on the following page.
+
+For each indicator, two sets of estimates are shown based on the latest and the previous DHS survey, when available. Details on the statistical methods used can be found at [https://sae4health.stat.uw.edu/method/approach_overview/](https://sae4health.stat.uw.edu/method/approach_overview/). The following outputs are included:
+
+- **Sampling information**  
+  Number of clusters, samples, and events by Admin-1 and Admin-2 areas.  
+
+- **Admin-1 maps**  
+  Weighted estimates at the Admin-1 level (without spatial smoothing). For each area, we present the point estimate, the width of the 90% uncertainty interval, and the probability thati prevalence exceeds the national prevalence estimate for each survey.  
+
+- **Admin-2 maps**  
+  Spatially smoothed estimates at the Admin-2 level. Spatial smoothing is usually necessary to account for sparse data. The same set of maps as Admin-1 are presented.  
+
+- **Admin-1 vs. Admin-2 comparison**  
+  Side-by-side comparison of prevalence at Admin-1 and Admin-2. To improve readability, uncertainty intervals are omitted. Because Admin-2 estimates are spatially smoothed, the Admin-1 estimate may fall outside the range of the corresponding Admin-2 estimates, especially when prevalence is near 0% or 100%.  
+
+- **Scatter plots (Admin-2)**  
+  Comparison of weighted (unsmoothed) and smoothed Admin-2 estimates. Red dots indicate areas without valid weighted estimates. Smoothed estimates generally show shrinkage toward the mean and narrower uncertainty intervals. If the smoothed estimates appear flat, this may indicate overshrinkage due to extreme data sparsity; such results should be interpreted with caution.  
+
+- **Ridge plots (Admin-1)**  
+  Visualization of the latest Admin-1 prevalence distributions and changes since the previous survey.  
+
+- **Interval plots (Admin-1 and Admin-2)**  
+  Prevalence estimates with uncertainty intervals for both the most recent and previous surveys. 
+
+
+\newpage
+## Country information
+
+DHS surveys included `r c1 ` clusters in `r yr1` and `r c2 ` clusters in `r yr2`. Table 1 presents national estimates for 14 indicators from the two survey years. The subnational prevalence results will provided for `r ad11` Admin-1 areas and `r ad12` Admin-2 areas in this report.
+
+
+```{r }
+# The Rwanda 2025 DHS survey (Phase 9) is currently ongoing and its datasets will be available soon. 
+# The Kenya 2025 interim DHS survey (Phase 9)
+# The Nigeria 2023-24 DHS survey (Phase 8)
+# The Ethiopia 2024–25 DHS survey (Phase 8)
+# topic=surveyPrev::indicatorList[surveyPrev::indicatorList$ID %in% indicatorlist, c("ID","Topic")]
+# 
+# infolist=left_join(infolist,topic, by="ID" )
+# 
+# 
+tab3=read.csv(file.path(source_path,"Gates-results/estimates", country, "National3.csv"))
+
+tab=read.csv(file.path(source_path,"Gates-results/estimates", country, "National.csv"))
+pretty_names <- gsub("\\.", " ", names(tab)) 
+
+tab <- tab %>%
+   dplyr::left_join(
+    infolist %>%  dplyr::select(Indicator = Description, Group, ID),
+    by = "Indicator"
+  ) %>%
+  dplyr:: arrange(Group, ID) %>%  # change Indicator to another column if needed
+ dplyr:: select(-ID)
+
+
+# order groups like your sidebar and sort rows
+group_order <- c("Child Health", "Maternal Health", "Outcomes",  "Social determinants")
+tab2 <- tab %>%
+  mutate(group = factor(Group, levels = group_order)) %>%
+  arrange(group, Indicator)
+tab2$Indicator[4]="Percentage of children 12-23 months who had received MCV 1"
+# row counts per group for pack_rows()
+idx <- table(tab2$group)
+
+
+# pretty column names (remove dots)
+# pretty_names <- c("Indicator", "DHS 2013", "DHS 2018")
+
+
+pretty_names <- c("Indicator", paste0("DHS ", yr1), paste0("DHS ", yr2))
+
+kable(tab2[1:3], #%>% dplyr::select(Indicator, DHS.2013, DHS.2018),
+      col.names = pretty_names,
+      align = c("l", "r", "r"),
+      booktabs = TRUE, caption = "National estimates.")%>%  # ) 
+kable_styling(latex_options = "hold_position",
+                position = "center", 
+              
+              full_width = FALSE, 
+              stripe_color = "gray!10") %>%
+  row_spec(0, bold = TRUE) %>%
+  add_header_above(c(" " = 1, "Survey Year" = 2)) %>%
+  pack_rows(index = idx)   # <— adds “Child Health”, “Characteristics”, “Maternal Health” sections
+
+
+
+
+```
+
+
+```{r}
+#0.8 for the rest #0.45 for moz 0.6 for kenya
+results_path<- file.path(source_path,"Gates-results/Results",country, yr1)
+load( file.path(results_path,"basic.Rdata"))
+poly.adm2 <- ms_simplify(poly.adm2, keep = 0.1, keep_shapes = TRUE)  #
+# format(object.size(poly.adm2), "MB")
+poly.adm1 <- ms_simplify(poly.adm1, keep = 0.1, keep_shapes = TRUE)  #
+# format(object.size(poly.adm2), "MB")
+
+
+```
+
+
+
+
+```{r, out.width='0.8\\linewidth', fig.align='center',fig.cap="Admin-1 and Admin-2 map ", eval=FALSE}
+
+
+
+ad1=ggplot(poly.adm1) +
+  geom_sf(fill = NA, color = "black", size = 0.3) +
+ theme_bw() +
+  theme(
+    axis.text = element_blank(),      # remove degree labels
+    axis.ticks = element_blank(),     # remove tick marks
+    axis.title = element_blank(),     # remove axis titles
+    panel.grid = element_blank(),     # remove grid lines
+    panel.border = element_rect(color = "black", fill = NA)  # keep outer frame
+  )
+ad2=ggplot(poly.adm2) +
+  geom_sf(fill = NA, color = "black", size = 0.3) +
+  theme_bw() +
+  theme(
+    axis.text = element_blank(),      # remove degree labels
+    axis.ticks = element_blank(),     # remove tick marks
+    axis.title = element_blank(),     # remove axis titles
+    panel.grid = element_blank(),     # remove grid lines
+    panel.border = element_rect(color = "black", fill = NA)  # keep outer frame
+  )
+
+ad1+ad2
+```
+
+
+
+
+
+```{r, echo=FALSE, results='asis' , out.width='\\ linewidth'}
+latex_img <- function(p, width="\\linewidth") {
+  if (length(p) == 0 || is.na(p) || !nzchar(p) || !file.exists(p)) {
+    cat(sprintf("\\textit{(missing file) %s}\\\\\n\n", ifelse(length(p), p, "")))
+    return(invisible())
+  }
+  cat(sprintf("\\begin{center}\\includegraphics[width=%s]{%s}\\end{center}\n\n",
+              width, p))
+}
+
+
+
+indicatorlists=indicatorlist
+for (i in seq_along(indicatorlists)) {
+  cat("\\newpage\n\n")
+
+id  <- indicatorlists[i]
+def <- infolist$Full_definition[infolist$ID == id]
+short <- infolist$Description[infolist$ID == id]
+
+cat(sprintf("## %s\n\n", short))
+
+cat(sprintf("`%s`: %s\n\n", id, def))
+
+  
+cat("\\textbf{Sampling information for previous survey}\n\n")
+    cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+      cat(paste0(tab3[tab3$ID==indicatorlists[i], ]$previous_no_ad2," Admin-2 areas have no samples, ",
+                 tab3[tab3$ID==indicatorlists[i], ]$previous_fixed)," Admin-2 areas have unstable variance." , "\n\n", sep = "")
+    
+  if (i <= length(files_yr1)) latex_img(files_yr1[i],  ".75\\linewidth")
+  cat("\\newpage\n\n")
+
+  cat("\\textbf{Sampling information for current survey}\n\n")
+   cat( infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+         cat(paste0(tab3[tab3$ID==indicatorlists[i], ]$current_no_ad2," Admin-2 areas have no samples, ",
+                 tab3[tab3$ID==indicatorlists[i], ]$current_fixed)," Admin-2 areas have unstable variance." , "\n\n", sep = "")
+    
+   
+  if (i <= length(files_yr2)) latex_img(files_yr2[i],  ".75\\linewidth")
+  cat("\\newpage\n\n")
+
+  cat("\\textbf{Maps for Admin-1 unsmoothed weighted estimates}\n\n")
+   cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+  if (i <= length(files))     latex_img(files[i],  ".8\\linewidth")
+  cat("\\newpage\n\n")
+
+  cat("\\textbf{Maps for Admin-2 smoothed weighted estimates}\n\n")
+   cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+
+  if (i <= length(files_2))   latex_img(files_2[i], ".8\\linewidth")
+   
+     cat("\\newpage\n\n")
+       cat("\\textbf{Overlay plots for Admin-1 unsmoothed and Admin-2 smoothed weighted estimates}\n\n")
+  if (i <= length(files_3))   latex_img(files_3[i], ".8\\linewidth")
+       cat("\\textbf{Scatter plots for Admin-2 unsmoothed and smoothed weighted estimates }\n\n")
+
+  if (i <= length(files_4))   latex_img(files_4[i], ".7\\linewidth")
+   
+       cat("\\newpage\n\n")
+  cat("\\textbf{Ridge plots for Admin-1 results}\n\n")
+  cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+  cat(paste0( "Left: ", yr2, " weighted estimates, Right: Changes from ",yr1), "\n\n", sep = "")
+  if (i <= length(files_5))   latex_img(files_5[i], ".9\\linewidth")
+
+  
+       cat("\\newpage\n\n")
+
+    cat("\\textbf{Inverval plots for Admin-1 weighted estimates}\n\n")
+  cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+  if (i <= length(files_6))   latex_img(files_6[i], ".9\\linewidth")
+    
+   cat("\\newpage\n\n")
+
+     cat("\\textbf{Inverval plots for Admin-2 smoothed weighted estimates}\n\n")
+  cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+  if (i <= length(files_7))   latex_img(files_7[i], "\\linewidth")
+
+    
+   
+}
+```
+
+
+
+
