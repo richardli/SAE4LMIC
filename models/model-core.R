@@ -184,8 +184,6 @@ for (i in which(surveys$country %in% country_to_run)) { #seq_len(nrow(surveys))
   
 
   
-  
-  
   for (indicator in indicator_to_run) {
     
     qfile=  paste0(file.path(results_path, indicator),".qs")
@@ -275,7 +273,7 @@ for (i in which(surveys$country %in% country_to_run)) { #seq_len(nrow(surveys))
       
       
       out1 <- file.path(results_path, paste0( "summary-FH_adm2_fix_nest-",indicator, ".qs"))
-      qs::qsave(summary(FH_adm2_fix_nest$model), file = out1)
+      qs::qsave(summary(FH_adm2_fix_nest$model$fit), file = out1)
       message("Saved: ", out1)
       
       

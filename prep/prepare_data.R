@@ -5,8 +5,8 @@
 
 library(sf)
 library(ggplot2)
-library(tidyr)
 library(dplyr)
+library(tidyr)
 library(patchwork)
 library(robustbase)
 library(raster)
@@ -57,7 +57,32 @@ countryList=c("Burkina Faso" ,
 # to loop over all indicator indicatorlist=infolist$ID
 # to loop over some indicators indicatorlist<-c("RH_DELP_C_HOT") #"RH_DELP_C_DHT", "RH_DELP_C_PUT","RH_DELP_C_PRT",
 
-indicatorlist="ML_NETC_C_ITN"
+indicatorlist="RH_PCCT_C_DY2"
+countryList=c("Sierra Leone",
+              "Rwanda",
+              "Burkina Faso",
+              "Congo Democratic Republic",
+              "Mozambique",#will fail
+              "Kenya"
+              )
+
+
+indicatorlist="RH_DELA_C_SKP"
+countryList=c("Zambia",
+              "Sierra Leone",
+              "Rwanda",
+              "Senegal",
+              "Mozambique"
+)
+
+
+
+
+indicatorlist="RH_DELA_C_SKP"
+countryList=c("Mali","Senegal"
+       
+)
+
 
 for (i in which(surveys$country %in% countryList) ) {
 
@@ -95,9 +120,6 @@ for (indicator in indicatorlist) {
   gc()
 }
 }
-
-
-
 
 
 

@@ -207,9 +207,9 @@ for (i in which(surveys$country %in% country) ) {
 
 
 
-
+n_admin=n_admin2=c()
 #table for number of admin 1 and admin 2 and shapefile. 
-
+countryList=unique(shapeused$country)
 
 rows <- vector("list", length = length(which(surveys$country %in% countryList)))
 k <- 1
@@ -241,6 +241,14 @@ for (i in  seq_len(nrow(surveys))) {
       length(get("admin.info2", envir = e)$data$admin2.name.full),
       error = function(...) NA_integer_
     )
+    n_geo_cluster <- tryCatch(
+      length(get("geo", envir = e)$DHSCLUST),
+      error = function(...) NA_integer_
+    )
+    n_cluster <- tryCatch(
+      length(get("cluster.info", envir = e)$data$cluster),
+      error = function(...) NA_integer_
+    )
   } else {
     warning("Missing basic.Rdata for: ", country, " ", year)
   }
@@ -248,10 +256,12 @@ for (i in  seq_len(nrow(surveys))) {
   rows[[k]] <- data.frame(
     survey_name = survey_name,
     country     = country,
-    year        = as.integer(year),
+    year        = year,
     n_admin1    = n_admin1,
     n_admin2    = n_admin2,
-    stringsAsFactors = FALSE
+    stringsAsFactors = FALSE,
+    n_geo_cluster=n_geo_cluster,
+    n_cluster=n_cluster
   )
   k <- k + 1
 }

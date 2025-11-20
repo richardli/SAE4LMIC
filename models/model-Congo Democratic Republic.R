@@ -11,7 +11,7 @@ print(source_path)
 # for (indicator_to_run in indicatorlist) {
 # 	source(here(git_path, "models", "model-core.R"))
 # }
-
+indicatorlist="RH_PCCT_C_DY2"
 
 # If special treatments are needed for some indicators, update the script below with if-statements
 # This loop use variace fix code in "model-core-newvarfix.R"

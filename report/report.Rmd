@@ -76,17 +76,154 @@ c2=shapeused[shapeused$country==country& shapeused$year==yr2,]$n_geo_cluster
 ad11=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_admin1
 ad12=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_admin2
 indicatorlist=infolist$ID
+
+
+
+```
+
+
+```{r}
+get_image_files <- function(image_dir,
+                            pattern,
+                            indicator_ids = NULL,
+                            prefix = NULL) {
+  files <- sort(list.files(
+    path       = image_dir,
+    pattern    = pattern,
+    full.names = TRUE,
+    recursive  = FALSE
+  ))
+
+  if (!is.null(indicator_ids) && !is.null(prefix) && length(files) > 0) {
+    file_ids <- sub(paste0("^", prefix, "(.*)\\.png$"), "\\1", basename(files))
+    indicator_order <- indicator_ids[indicator_ids %in% file_ids]
+    idx <- match(indicator_order, file_ids)
+    files <- files[idx]
+  }
+
+  files
+}
+
+get_image_files2 <- function(image_dir,
+                            pattern,
+                            indicator_ids = NULL) {
+  files <- sort(list.files(
+    path       = image_dir,
+    pattern    = pattern,
+    full.names = TRUE,
+    recursive  = FALSE
+  ))
+
+  if (!is.null(indicator_ids) && length(files) > 0) {
+    # Strip dir + extension first: "Basic-CH_VACC_C_MSL-2018"
+    base <- tools::file_path_sans_ext(basename(files))
+
+    # Extract indicator between "Basic-" and "-YEAR"
+    # → "CH_VACC_C_MSL"
+    file_ids <- sub("^Basic-(.*)-[0-9]{4}$", "\\1", base)
+
+    indicator_order <- indicator_ids[indicator_ids %in% file_ids]
+    idx <- match(indicator_order, file_ids)
+
+    files <- files[idx]
+  }
+
+  files
+}
+
 ```
 
 ```{r}
+image_dir <- normalizePath(
+  file.path(source_path, middle_path, params$country),
+  winslash = "/", mustWork = TRUE
+)
+
+# ad1 maps: needs special ordering by infolist$ID
+files   <- get_image_files(
+  image_dir   = image_dir,
+  pattern     = "^ad1_map_.*\\.png$",
+  indicator_ids = infolist$ID,
+  prefix      = "ad1_map_"
+)
+
+# everything else: just sorted list.files
+
+files_2 <- get_image_files(
+  image_dir = image_dir,
+  pattern   = "^ad2_map_.*\\.png$",
+    indicator_ids = infolist$ID,
+prefix      = "ad2_map_"
+)
+
+files_3 <- get_image_files(
+  image_dir = image_dir,
+
+  pattern   = "^overlay-.*\\.png$",
+   indicator_ids = infolist$ID,
+prefix      = "overlay_"
+)
+
+files_4 <- get_image_files(
+  image_dir = image_dir,
+  pattern   = "^scatter-.*\\.png$",
+     indicator_ids = infolist$ID,
+prefix      = "scatter-"
+)
+
+files_5 <- get_image_files(
+  image_dir = image_dir,
+  pattern   = "^ridge_.*\\.png$",
+   indicator_ids = infolist$ID,
+prefix      = "ridge_"
+)
+
+files_6 <- get_image_files(
+  image_dir = image_dir,
+  pattern   = "^interval-ad1-.*\\.png$",
+   indicator_ids = infolist$ID,
+prefix      = "interval-ad1-"
+)
+
+files_7 <- get_image_files(
+  image_dir = image_dir,
+  pattern   = "^interval-ad2-.*\\.png$",
+    indicator_ids = infolist$ID,
+prefix      = "interval-ad2-"
+)
+
+files_yr1 <- get_image_files2(
+  image_dir     = image_dir,
+  pattern       = paste0("^Basic-.*-", yr1, "\\.png$"),
+  indicator_ids = infolist$ID
+)
+
+files_yr2 <- get_image_files2(
+  image_dir     = image_dir,
+  pattern       = paste0("^Basic-.*-", yr2, "\\.png$"),
+  indicator_ids = infolist$ID
+)
+```
+
+
+```{r, eval=FALSE}
 
 image_dir <- normalizePath(file.path(source_path, middle_path, params$country),
                            winslash = "/", mustWork = TRUE)
+
+
+
 
 files <- sort(list.files(path = image_dir,
                          pattern = "^ad1_map_.*\\.png$",
                          full.names = TRUE,
                          recursive = FALSE))
+file_ids <- sub("^ad1_map_(.*)\\.png$", "\\1", basename(files))
+indicator_order <- infolist$ID[infolist$ID %in% file_ids]
+idx <- match(indicator_order, file_ids)
+files <- files[idx]
+
+
 
 files_2 <- sort(list.files(path = image_dir,
                          pattern = "^ad2_map_.*\\.png$",
@@ -157,7 +294,7 @@ For each indicator, two sets of estimates are shown based on the latest and the 
   Number of clusters, samples, and events by Admin-1 and Admin-2 areas.  
 
 - **Admin-1 maps**  
-  Weighted estimates at the Admin-1 level (without spatial smoothing). For each area, we present the point estimate, the width of the 90% uncertainty interval, and the probability thati prevalence exceeds the national prevalence estimate for each survey.  
+  Weighted estimates at the Admin-1 level (without spatial smoothing). For each area, we present the point estimate, the width of the 90% uncertainty interval, and the probability that prevalence exceeds the national prevalence estimate for each survey.  
 
 - **Admin-2 maps**  
   Spatially smoothed estimates at the Admin-2 level. Spatial smoothing is usually necessary to account for sparse data. The same set of maps as Admin-1 are presented.  
@@ -166,7 +303,7 @@ For each indicator, two sets of estimates are shown based on the latest and the 
   Side-by-side comparison of prevalence at Admin-1 and Admin-2. To improve readability, uncertainty intervals are omitted. Because Admin-2 estimates are spatially smoothed, the Admin-1 estimate may fall outside the range of the corresponding Admin-2 estimates, especially when prevalence is near 0% or 100%.  
 
 - **Scatter plots (Admin-2)**  
-  Comparison of weighted (unsmoothed) and smoothed Admin-2 estimates. Red dots indicate areas without valid weighted estimates. Smoothed estimates generally show shrinkage toward the mean and narrower uncertainty intervals. If the smoothed estimates appear flat, this may indicate overshrinkage due to extreme data sparsity; such results should be interpreted with caution.  
+  Comparison of weighted (unsmoothed) and smoothed Admin-2 estimates. Red dots indicate areas without valid weighted estimates. Smoothed estimates generally show shrinkage toward the mean and narrower uncertainty intervals. If the smoothed estimates appear have a much narrower range, as compared to the weighted estimates, this may indicate overshrinkage due to extreme data sparsity; such results should be interpreted with caution.  
 
 - **Ridge plots (Admin-1)**  
   Visualization of the latest Admin-1 prevalence distributions and changes since the previous survey.  
@@ -178,7 +315,7 @@ For each indicator, two sets of estimates are shown based on the latest and the 
 \newpage
 ## Country information
 
-DHS surveys included `r c1 ` clusters in `r yr1` and `r c2 ` clusters in `r yr2`. Table 1 presents national estimates for 14 indicators from the two survey years. The subnational prevalence results will provided for `r ad11` Admin-1 areas and `r ad12` Admin-2 areas in this report.
+DHS surveys included `r c1 ` clusters in `r yr1` and `r c2 ` clusters in `r yr2`. Table 1 presents national estimates for 20 indicators from the two survey years. The subnational prevalence results are provided for `r ad11` Admin-1 areas and `r ad12` Admin-2 areas in this report.
 
 
 ```{r }
@@ -206,10 +343,10 @@ tab <- tab %>%
 
 
 # order groups like your sidebar and sort rows
-group_order <- c("Child Health", "Maternal Health", "Outcomes",  "Social determinants")
+group_order <- c("Maternal Health", "Child Health",  "Social Determinants", "Health Outcomes")
 tab2 <- tab %>%
   mutate(group = factor(Group, levels = group_order)) %>%
-  arrange(group, Indicator)
+  arrange(group)
 tab2$Indicator[4]="Percentage of children 12-23 months who had received MCV 1"
 # row counts per group for pack_rows()
 idx <- table(tab2$group)
@@ -242,11 +379,11 @@ kable_styling(latex_options = "hold_position",
 
 ```{r}
 #0.8 for the rest #0.45 for moz 0.6 for kenya
-results_path<- file.path(source_path,"Gates-results/Results",country, yr1)
-load( file.path(results_path,"basic.Rdata"))
-poly.adm2 <- ms_simplify(poly.adm2, keep = 0.1, keep_shapes = TRUE)  #
+# results_path<- file.path(source_path,"Gates-results/Results",country, yr1)
+# load( file.path(results_path,"basic.Rdata"))
+# poly.adm2 <- ms_simplify(poly.adm2, keep = 0.1, keep_shapes = TRUE)  #
 # format(object.size(poly.adm2), "MB")
-poly.adm1 <- ms_simplify(poly.adm1, keep = 0.1, keep_shapes = TRUE)  #
+# poly.adm1 <- ms_simplify(poly.adm1, keep = 0.1, keep_shapes = TRUE)  #
 # format(object.size(poly.adm2), "MB")
 
 

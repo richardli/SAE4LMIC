@@ -1,28 +1,4 @@
 
-# Helper Function : 
-# try to detect geoname folder inside rawDHS/<country>/<year>/
-detect_geoname <- function(base_path, country, year, survey_name = NULL) {
-  rawdir <- file.path(base_path, "rawDHS", country, as.character(year))
-  if (!dir.exists(rawdir)) return(NULL)
-  subs <- list.dirs(rawdir, full.names = FALSE, recursive = FALSE)
-  # First try exact match with survey_name
-  if (!is.null(survey_name) && nzchar(survey_name)) {
-    m <- subs[grepl(survey_name, subs, ignore.case = TRUE)]
-    if (length(m) >= 1) {
-      return(m[1])
-    }
-  }
-  # Next, look for a subfolder that contains a shapefile named <sub>.shp
-  for (sub in subs) {
-    shp_path <- file.path(rawdir, sub, paste0(sub, ".shp"))
-    if (file.exists(shp_path)) return(sub)
-  }
-  # Fallback: if only one subfolder exists, return it
-  if (length(subs) == 1) return(subs[1])
-  return(NULL)
-}
-
-
 get_dhs_filenames <- function(country, year) {
   if (country == "Nigeria" & year == 2024) {
     irname <- "NGIR8ADT/NGIR8AFL.DTA"
@@ -168,9 +144,8 @@ get_dhs_filenames <- function(country, year) {
 
   return(list(irname = irname, krname = krname, prname = prname, brname = brname))
 }
-
 get_dhs_for_indicator <- function(ind,country,year,irname,prname,krname,brname,
-  infolist, source_path) {
+                                  infolist, source_path) {
   .dhs_cache <- new.env(parent = emptyenv())
 
   recode <- infolist$recode[
@@ -195,37 +170,265 @@ get_dhs_for_indicator <- function(ind,country,year,irname,prname,krname,brname,
   get(recode, envir = .dhs_cache)
 }
 
-savedata_one_indicator <- function(ind,country,year,irname,prname,krname,brname,
-  infolist, source_path,results_path) {
-  message("\n=== Indicator: ", ind, " ===")
-  dhsData=NULL
-  dhsData <- get_dhs_for_indicator(ind= ind,
-                                   country=country,
-                                   year=year,
-                                   irname=irname,
-                                   prname=prname,
-                                   krname=krname,
-                                   brname=brname,  
-                                   infolist=infolist, 
-                                   source_path=source_path)
-  data    <- surveyPrev::getDHSindicator(dhsData, indicator = ind)
+
+library(devtools)
+# install_github("richardli/surveyPrev",force = T)
+
+# library(surveyPrev)
+
+library(dplyr)
+library(kableExtra)
+library(labelled)
+library(naniar)
+library(sjlabelled)
+
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(patchwork)
+library(robustbase)
+library(raster)
+library(devtools)
+library(forcats)
+library(qs)
+library(countrycode)
+# install_github("richardli/surveyPrev",force = T)
+# install_github("richardli/SUMMER")
+
+# library(surveyPrev)
+library(SUMMER)
+library(INLA)
 
 
-  # data.info<-surveyPrev::datainfo(
-  #   data = data,
-  #   cluster.info = cluster.info,
-  #   admin.info1 = admin.info1,
-  #   admin.info2 = admin.info2
-  # )
+
+# source_path is the folder where this github repository lives in
+source_path <- "/Users/qianyu/Dropbox/binary_code/pcg/GATES"
+# source_path is the path for this github repository
+git_path <- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/SAE4LMIC"
+
+# Read in the list of indicators and surveys from the spreadsheet
+infolist <- read.csv(file.path(git_path, "info", "infolist.csv"))
+surveys <- read.csv(file.path(git_path,  "info", "surveyslist.csv"))
+indicatorlist <- infolist$ID
 
 
 
-  out <- file.path(results_path, paste0(ind, ".qs"))
-  qs::qsave(data, file = out)
-# 
-#   out1 <- file.path(results_path, paste0(ind,"_info", ".qs"))
-#   qs::qsave(data.info, file = out1)
-#   message("Saved: ", out)
-#   invisible(out)
+
+
+ind="RH_PCCT_C_DY2"
+ind="RH_DELP_C_PRT"
+ind="RH_DELA_C_SKP"
+
+
+
+
+country="Kenya"
+year=2014
+
+
+country="Sierra Leone"
+year=2013
+year=2019
+
+
+country="Mozambique"
+year=2011
+
+ind="ED_EDUC_W_SEH"
+
+
+country="Rwanda"
+year=2019
+
+country="Mali"
+year=2018
+
+
+ind="ML_NETC_C_ITN"
+year=2018
+country="Zambia"
+
+ind="CH_VACC_C_MSL"
+country="Rwanda"
+year=2014
+
+
+CHECK_API=function(country="Burkina Faso",
+          year=2021,
+          ind="RH_PCCT_C_DY2"
+          )
+{
+  country_short=surveys$country_short[surveys$country==country &surveys$year==year ]
+
+
+dhsData=NULL
+fn<-get_dhs_filenames(country,year)
+irname<-fn$irname
+krname<-fn$krname
+prname<-fn$prname
+brname<-fn$brname
+dhsData <- get_dhs_for_indicator(ind= ind,
+                                 country=country,
+                                 year=year,
+                                 irname=irname,
+                                 prname=prname,
+                                 krname=krname,
+                                 brname=brname,
+                                 infolist=infolist,
+                                 source_path=source_path)
+
+data    <- surveyPrev::getDHSindicator(dhsData, indicator = ind)
+
+
+results_path <- file.path(source_path, "/Gates-results/Results", country, year)
+
+load(file.path(results_path, "basic.Rdata"))
+
+# load( paste0(results_path,indicator,".Rdata"))
+
+
+
+
+
+
+if (country=="Rwanda"&year==2014){
+  API0_PATH= paste0(source_path,"/Gates-data/API/admin0/",country_short,"_","2015","_DHS_est.rda")
+  load(API0_PATH)
+}else{
+  API0_PATH= paste0(source_path,"/Gates-data/API/admin0/",country_short,"_",year,"_DHS_est.rda")
+  load(API0_PATH)
 }
+
+
+
+vals <- tmp_res$Value[tmp_res$IndicatorId == ind]
+vals
+res_adm0<-surveyPrev::directEST(
+  data = data, cluster.info = cluster.info, admin = 0,
+  admin.info = admin.info1, aggregation = FALSE, var.fix = TRUE,
+  alt.strata = "v022",
+  CI=0.9
+)
+
+res_adm0$res.natl$direct.est
+
+c(res_adm0$res.natl$direct.est
+,vals)
+}
+
+
+CHECK_API(country="Congo Democratic Republic",
+          year=2013,
+          ind="RH_PCCT_C_DY2"
+)
+
+
+CHECK_API(country="Rwanda",
+          year=2014,
+          ind="RH_PCCT_C_DY2"
+)
+
+
+
+
+CHECK_API(country="Sierra Leone",
+          year=2013,
+          ind="RH_PCCT_C_DY2"
+)
+
+
+
+
+CHECK_API(country="Sierra Leone",
+          year=2013,
+          ind="RH_PCCT_C_DY2"
+)
+
+
+CHECK_API(country="Senegal",
+          year=2019,
+          ind="RH_DELA_C_SKP"
+)
+
+
+CHECK_API(country="Rwanda",
+          year=2019,
+          ind="RH_DELA_C_SKP"
+)
+
+CHECK_API(country="Mali",
+          year=2018,
+          ind="RH_DELA_C_SKP"
+)
+
+CHECK_API(country="Mozambique",
+          year=2011,
+
+          ind="RH_DELA_C_SKP"
+)
+
+
+
+CHECK_API(country="Mali",
+          year=2023,
+          ind="ED_EDUC_W_SEH"
+)
+
+
+
+
+CHECK_API(country="Rwanda",
+          year=2014,
+          ind="CH_VACC_C_DP3"
+)
+
+
+CHECK_API(country="Rwanda",
+          year=2014,
+          ind="CH_VACC_C_MSL"
+)
+
+
+CHECK_API(country="Rwanda",
+          year=2014,
+          ind="CH_DIAT_C_ORT"
+)
+
+CHECK_API(country="Nigeria",
+          year=2018,
+          ind="CH_DIAT_C_ORT"
+)
+CHECK_API(country="Burkina Faso",
+          year=2021,
+          ind="CH_DIAT_C_ORT"
+)
+
+
+
+CHECK_API(country="Mali",
+          year=2018,
+          ind="CH_DIAT_C_ORT"
+)
+
+
+
+CHECK_API(country="Mozambique",
+          year=2011,
+          ind="CH_DIAT_C_ORT"
+)
+
+
+
+CHECK_API(country="South Africa",
+          year=2016,
+          ind="CH_DIAT_C_ORT"
+)
+
+
+
+CHECK_API(country="Senegal",
+          year=2023,
+          ind="RH_DELA_C_SKP"
+)
 

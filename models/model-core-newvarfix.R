@@ -127,12 +127,42 @@ for (i in which(surveys$country %in% country_to_run)){
           admin.info2 = admin.info2
         )
         
-        res_adm2_fix<-directEST_1030(
-          data = data, cluster.info = cluster.info, admin = 2,
-          admin.info = admin.info2, aggregation = FALSE, var.fix=TRUE, all.fix = FALSE,
-          CI=0.9
-          
-        )
+        
+        # res_adm2_fix <- tryCatch(
+        #   directEST_1030(
+        #     data = data, cluster.info = cluster.info, admin = 2,
+        #     admin.info = admin.info2, aggregation = FALSE, var.fix=TRUE, all.fix = FALSE,
+        #     CI=0.9
+        #     
+        #   ),
+        #   error = function(e) {
+        #     message( "Dir_varfix Admin-2 fix failed for ", indicator, ": ", conditionMessage(e))
+        #     "failed"
+        #   }  )
+        # 
+        # res_adm2_fix<- directEST_1030(
+        #     data = data, cluster.info = cluster.info, admin = 2,
+        #     admin.info = admin.info2, aggregation = FALSE, var.fix=TRUE, all.fix = FALSE,
+        #     CI=0.9
+        # 
+        #   )
+   
+        
+        
+        
+        
+        res_adm2_fix <- tryCatch(
+          directEST_1030(
+            data = data, cluster.info = cluster.info, admin = 2,
+            admin.info = admin.info2, aggregation = FALSE, var.fix=TRUE, all.fix = FALSE,
+            CI=0.9
+
+          ),
+          error = function(e) {
+            message( "Dir_varfix Admin-2 fix failed for ", indicator, ": ", conditionMessage(e))
+            "failed"
+          }  )
+
         res_adm2_fix$data.info<-data.info$summary.ad2
         
         
@@ -306,13 +336,13 @@ for (i in which(surveys$country %in% country_to_run)) { #seq_len(nrow(surveys))
       
       
       
-      out <- file.path(results_path, paste0( "new_FH_adm2_fix_nest-",indicator, ".qs"))
+      out <- file.path(results_path, paste0("new_FH_adm2_fix_nest-",indicator, ".qs"))
       qs::qsave(FH_adm2_fix_nest, file = out)
       message("Saved: ", out)
       
       
       out1 <- file.path(results_path, paste0( "new_summary-FH_adm2_fix_nest-",indicator, ".qs"))
-      qs::qsave(summary(FH_adm2_fix_nest$model), file = out1)
+      qs::qsave(summary(FH_adm2_fix_nest$model$fit), file = out1)
       message("Saved: ", out1)
       
       
@@ -325,3 +355,7 @@ for (i in which(surveys$country %in% country_to_run)) { #seq_len(nrow(surveys))
     }   
   }
 } 
+
+
+
+

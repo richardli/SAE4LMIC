@@ -37,10 +37,19 @@ source_path <- dirname(here::here())
 # source_path is the path for this github repository 
 git_path <- here::here()
 
+
+# git_path <- rprojroot::find_root(
+#   has_file(".here") | is_rstudio_project | is_git_root
+# )
+# 
+# source_path <- dirname(git_path)
+
 # Read in the list of indicators and surveys from the spreadsheet
 infolist <- read.csv(here(git_path, "info", "infolist.csv"))
 surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
 indicatorlist <- infolist$ID
+
+# indicatorlist =indicatorlist[13:20]
 
 
 

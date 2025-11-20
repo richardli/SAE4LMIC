@@ -1,56 +1,5 @@
 
 
-readresult<-function(resultname, country, indicatorlistloop){
-  
-  idx <- which(surveys$country == country)
-  res_data_ad=list()
-  # ad_store=list()
-  for (i in seq(min(idx), max(idx))) {
-    country       <- surveys$country[i]
-    year          <- surveys$year[i]
-    year_key      <- as.character(year)
-    version       <- surveys$version[i]
-    survey_name   <- surveys$survey_name[i]
-    iso3          <- surveys$iso3[i]         
-    
-    results_path <- file.path(source_path, "Gates-results/Results", country, year)
-    load(file.path(results_path, "basic.Rdata"))
-    
-    for (indicator in indicatorlistloop) {
-      qfile <- file.path(results_path, paste0(resultname, indicator, ".qs"))
-      if (!file.exists(qfile)) {
-        message("Missing ", indicator, " for ", country, " ", year)
-        next
-      }
-      
-      loaded_data <- qs::qread(qfile)
-      message("Loaded ", indicator, " (", survey_name, ")")
-      
-      
-      res_data_ad[[iso3]][[year_key]][[indicator]] <- loaded_data
-      
-      # # Get existing map for this country/indicator, append this year
-      # ci_map <- ad_store[[country]][[indicator]]
-      # if (is.null(ci_map)) ci_map <- list()
-      # ci_map[[year_key]] <- loaded_data
-      # 
-      # # Write back to ad_store (if you still want to keep that structure)
-      # if (is.null(ad_store[[country]])) ad_store[[country]] <- list()
-      # ad_store[[country]][[indicator]] <- ci_map
-      # 
-      # # --- New write path (ISO3 -> year -> indicator) ---
-      # if (is.null(res_data_ad[[iso3]]))            res_data_ad[[iso3]] <- list()
-      # if (is.null(res_data_ad[[iso3]][[year_key]])) res_data_ad[[iso3]][[year_key]] <- list()
-      # res_data_ad[[iso3]][[year_key]][[indicator]] <- ci_map
-    }
-    
-    
-    
-  }
-  return(res_data_ad)
-}
-
-
 
 library(sf)
 library(ggplot2)
@@ -72,56 +21,127 @@ library(INLA)
 library(here)
 
 
+library(here)
+# source_path is the folder where this github repository lives in 
+source_path <- dirname(here::here())
+# source_path is the path for this github repository 
+git_path <- here::here()
 
-country="Nigeria"
 
 
 
+infolist <- read.csv(file.path(git_path, "info", "infolist.csv"))
+surveys <- read.csv(file.path(git_path,  "info", "surveyslist.csv"))
 
-source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
-infolist <- read.csv(file.path(source_path, "infolist.csv"))
-surveys <- read.csv(file.path(source_path, "surveyslist.csv"))
 indicatorlist=infolist$ID
 
 
+save_two_levels_estiamtes_csv <- function(ad1_name, ad2_name, country ) {
 
-
-res_data_ad1<-readresult(resultname="res_adm1-",
-                         country=country, 
-                         indicatorlistloop=indicatorlist)
-
-
-
-
-
-for (i in which(surveys$country %in% country)  ) {
+  idx <- which(surveys$country %in% country)
+  if (length(idx) == 0) stop("No surveys for country = ", country)
+  res_df <- tibble()   # accumulator
   
-  
-  
-  country       <- surveys$country[i]
-  year          <- surveys$year[i]
-  year_key      <- as.character(year)
-  version       <- surveys$version[i]
-  survey_name   <- surveys$survey_name[i]
-  iso3          <- surveys$iso3[i]    
-
-  
-  res_adm11 <-  res_data_ad1[[iso3]][[year_key]][[indicator]]
-
-  if(!is.null(res_adm11)) table=res_adm11$res.admin1[c("admin1.name", "direct.est","direct.se","direct.lower",  
-                                                    "direct.upper",  "cv2"),]
-  
-  table$
-  table <- table %>%
-    rename(
-      Region_Name = admin1.name,
-      Direct_Est = direct.est,
-      Direct_SE = direct.se,
-      CV = cv2
-    )
-
-  
+  for (i in idx) {
+    country      <- surveys$country[i]
+    year         <- surveys$year[i]
+    year_key     <- as.character(year)
+    survey_name  <- surveys$survey_name[i]
+    iso3         <- surveys$iso3[i]
+    results_path <- file.path(source_path, "Gates-results", "Results", country, year)
+    
+    for (indicator in infolist$ID) {
+      qfile_adm1 <- file.path(results_path, paste0(ad1_name, indicator, ".qs"))
+      qfile_adm2 <- file.path(results_path, paste0(ad2_name, indicator, ".qs"))
+      
+      if (!file.exists(qfile_adm1)) { message("Missing ADM1 ", indicator, " for ", country, " ", year); next }
+      if (!file.exists(qfile_adm2)) { message("Missing ADM2 ", indicator, " for ", country, " ", year); next }
+      
+      loaded_adm1 <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("read fail: ", qfile_adm1, " :: ", e$message); return(NULL) })
+      loaded_adm2 <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("read fail: ", qfile_adm2, " :: ", e$message); return(NULL) })
+      if (is.null(loaded_adm1) || is.null(loaded_adm2)) next
+      
+      ad1 <- loaded_adm1$res.admin1 %>%
+        mutate(
+          Region_Name = admin1.name,
+          Admin = 1,
+          Mean   = signif(direct.est,   4),
+          Median = signif(direct.est,   4),
+          Lower_CI = signif(direct.lower, 4),
+          Upper_CI = signif(direct.upper, 4),
+          Width_90_CI = signif(direct.upper - direct.lower, 4),
+          Coefficient_of_Variation = signif(cv2, 4)
+        ) %>%
+        transmute(
+          ISO3 = iso3, Country = country, Year = year, Survey = survey_name,
+          Indicator = indicator, Admin, Region_Name,
+          Mean, Median, Lower_CI, Upper_CI, Width_90_CI, Coefficient_of_Variation
+        )
+      
+      ad2 <- loaded_adm2$res.admin2 %>%
+        mutate(
+          Region_Name = admin2.name.full,
+          Admin = 2,
+          Mean   = signif(mean,   4),
+          Median = signif(median, 4),
+          Lower_CI = signif(lower, 4),
+          Upper_CI = signif(upper, 4),
+          Width_90_CI = signif(upper - lower, 4),
+          Coefficient_of_Variation = signif(cv2, 4)
+        ) %>%
+        transmute(
+          ISO3 = iso3, Country = country, Year = year, Survey = survey_name,
+          Indicator = indicator, Admin, Region_Name,
+          Mean, Median, Lower_CI, Upper_CI, Width_90_CI, Coefficient_of_Variation
+        )
+      
+      res_df <- bind_rows(res_df, ad1, ad2)
+    }
+  }
+  res_df
 }
 
+
+
+
+countrList=unique(surveys$country)
+
+res_tbl <- save_two_levels_estiamtes_csv(
+  ad1_name    = "new_res_adm1-",
+  ad2_name    = "new_FH_adm2_fix_nest-",
+  country     = "Nigeria"
+)
+
+write.csv(res_tbl,
+          file = file.path(source_path, "Gates-results/estimates",country,"combined_results.csv"),
+          row.names = FALSE)
+
+countrList="Tanzania" 
+
+for (ctry in countrList) {
+  message("Processing: ", ctry)
+  
+  res_tbl <- save_two_levels_estiamtes_csv(
+    ad1_name    = "new_res_adm1-",
+    ad2_name    = "new_FH_adm2_fix_nest-",
+    country     = ctry
+  )
+  
+  # If function returns empty (no data), skip writing file
+  if (nrow(res_tbl) == 0) {
+    message("No results for ", ctry, " — skipping CSV.")
+    next
+  }
+  
+  # Create an output directory per country
+  out_dir <- file.path(source_path, "Gates-results", "estimates", ctry)
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  
+  # Write CSV
+  out_file <- file.path(out_dir, "combined_results.csv")
+  write.csv(res_tbl, out_file, row.names = FALSE)
+  
+  message("Saved: ", out_file)
+}
 
 

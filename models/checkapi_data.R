@@ -14,6 +14,7 @@ library(devtools)
 library(forcats)
 library(qs)
 library(countrycode)
+library(purrr)
 # install_github("richardli/surveyPrev",force = T)
 # install_github("richardli/SUMMER")
 
@@ -59,10 +60,12 @@ countryList=c(
 countryList="Nigeria"
 countryList="Burkina Faso"
 countryList="Ethiopia"
+countryList=c("Zambia","Sierra Leone")
 
-countryList=c("Mali","Sierra Leone")
 
 
+countryList= unique(surveys$country)
+indicatorlist=infolist$ID
 
 
 for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
@@ -84,10 +87,13 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
 
 
 
-  if (country=="Rwanda"&year==2014){year=2015}
-  API0_PATH= paste0(source_path,"/Gates-data/API/admin0/",country_short,"_",year,"_DHS_est.rda")
+  if (country=="Rwanda"&year==2014){
+  API0_PATH= paste0(source_path,"/Gates-data/API/admin0/",country_short,"_","2015","_DHS_est.rda")
   load(API0_PATH)
-
+  }else{
+    API0_PATH= paste0(source_path,"/Gates-data/API/admin0/",country_short,"_",year,"_DHS_est.rda")
+    load(API0_PATH)
+  }
 
   for (indicator in indicatorlist) {
 
@@ -136,6 +142,26 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
       }
 
 
+      if (API=="CH_DIAT_C_ORT" ){
+        vals <-tmp_res$Value[
+          which(
+            tmp_res$IndicatorId == "CH_DIAT_C_ORT" &
+              tmp_res$ByVariableLabel %in% c(
+                "Five years preceding the survey"
+              )
+          )
+        ]
+        # & survey_name%in%c( "BF2021DHS",    
+        #                     "ET2019DHS",
+        #                     "ML2018DHS",    
+        #                     "MZ2011DHS",
+        #                     "NG2018DHS",  
+        #                     "RW2015DHS",
+        #                     "ZA2016DHS",      
+        #                     "TZ2015DHS",
+        #                     "TZ2022DHS" 
+
+      }
 
 
       if (length(vals) == 0) {
@@ -174,52 +200,54 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
       data=loaded_data1
 
 
+
+      if(all(is.na(data$value))){
+
+        all_results[[length(all_results) + 1]] <- data.frame(
+          survey_name   = survey_name,
+          country       = country,
+          year          = year,
+          indicator=indicator,
+          surveyPrev=   NA,
+          hasFile=1,
+          hasData=0,
+          API       =api0,
+          stringsAsFactors = FALSE
+        )
+
+
+
+      }else{
+
         res_adm0<-surveyPrev::directEST(
           data = data, cluster.info = cluster.info, admin = 0,
           admin.info = admin.info1, aggregation = FALSE, var.fix = TRUE,
           alt.strata = "v022",
           CI=0.9
         )
+        res_data_ad0[[surveys$iso3[i]]][[as.character(year)]][[indicator]]<-res_adm0
+
+
+        all_results[[length(all_results) + 1]] <- data.frame(
+          survey_name   = survey_name,
+          country       = country,
+          year          = year,
+          indicator=indicator,
+          surveyPrev=    as.numeric(res_adm0$res.natl$direct.est),
+          hasFile=1,
+          hasData=1,
+          API       =api0,
+          stringsAsFactors = FALSE
+        )
+        message("done: ", indicator, year)
 
 
 
-      # if (country %in% c("Sierra Leone","Rwanda")) {
-      #
-      #   res_adm0<-surveyPrev::directEST(
-      #     data = data, cluster.info = cluster.info, admin = 0,
-      #     admin.info = admin.info1, aggregation = FALSE, var.fix = TRUE,
-      #     alt.strata = "v022",
-      #     CI=0.9
-      #   )
-      #
-      #
-      # } else if(country == "Tanzania" && year== 2015){
-      #
-      #   res_adm0<-surveyPrev::directEST(
-      #     data = data, cluster.info = cluster.info, admin = 0,
-      #     admin.info = admin.info1, aggregation = FALSE, var.fix = TRUE,
-      #     alt.strata = "v022",
-      #     CI=0.9
-      #   )
-      #
-      #
-      # }else{
-      #
-      #   res_adm0<-surveyPrev::directEST(
-      #     data = data, cluster.info = cluster.info, admin = 0,
-      #     admin.info = admin.info1, aggregation = FALSE,
-      #     CI=0.9
-      #   )
-      #
-      # }
+      }
 
 
 
 
-
-      res_data_ad0[[surveys$iso3[i]]][[as.character(year)]][[indicator]]<-res_adm0
-
-      message("done: ", indicator, year)
 
 
 
@@ -227,6 +255,21 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
 
     }else {
       message("Missing ", indicator)
+
+
+
+      all_results[[length(all_results) + 1]] <- data.frame(
+        survey_name   = survey_name,
+        country       = country,
+        year          = year,
+        indicator=indicator,
+        surveyPrev=  NA,
+        hasFile=0,
+        hasData=0,
+        API       =api0,
+        stringsAsFactors = FALSE
+      )
+
     }
 
 
@@ -237,17 +280,6 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
 
 
 
-    all_results[[length(all_results) + 1]] <- data.frame(
-      survey_name   = survey_name,
-      country       = country,
-      year          = year,
-      indicator=indicator,
-      surveyPrev=    res_adm0$res.natl$direct.est,
-      # ad0u=ad0u,
-      # ad0l=ad0l,
-      API       =api0,
-      stringsAsFactors = FALSE
-    )
 
 
 
@@ -317,6 +349,98 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
 
 
 
+
+# root of all those folders
+check_root <- file.path(source_path, "Gates-results", "check")
+
+# 1. find all "*Checkapi0.csv" under country/year folders
+csv_files <- list.files(
+  check_root,
+  pattern = "Checkapi0\\.csv$",
+  recursive = TRUE,
+  full.names = TRUE
+)
+
+# 2. read and combine
+all_checkapi0 <- map_dfr(csv_files, function(f) {
+  df <- read.csv(f, stringsAsFactors = FALSE)
+
+  ## If summary_df does *not* already have country/year columns,
+  ## extract them from the path and add:
+  rel_path <- sub(paste0("^", check_root, .Platform$file.sep), "", f)
+  parts    <- strsplit(rel_path, .Platform$file.sep)[[1]]
+  country  <- parts[1]
+  year     <- parts[2]
+
+  df %>%
+    mutate(country = country,
+           year    = year,
+           .before = 1)
+})
+
+
+
+#1. no data 
+all_checkapi0_nodata <- all_checkapi0 %>%
+  filter(is.na(surveyPrev) & is.na(API))
+
+
+keys <- tibble::tibble(
+  country   = c("Mozambique", "Kenya", "Rwanda",   "Rwanda",   "Rwanda"),
+  year      = c(2022,         2022,    2014,       2014,       2019),
+  indicator = c("RH_DELP_C_PRT",
+                "RH_DELP_C_PRT",
+                "RH_DELP_C_PRT",
+                "CH_VACC_C_NON",
+                "CH_VACC_C_NON")
+)
+
+#1. pass eyeball check, no api, or need /100
+all_checkapi0_eyeballcheck <- all_checkapi0 %>%
+  semi_join(keys, by = c("country", "year", "indicator"))
+
+
+
+all_checkapi0_HC_WIXQ_P_12Q=all_checkapi0[ all_checkapi0$indicator=="HC_WIXQ_P_12Q",]
+#all_checkapi0_HC_WIXQ_P_12Q$surveyPrev
+
+
+
+all_checkapi0_issue=all_checkapi0[(is.na(all_checkapi0$match) | all_checkapi0$match == 0)& all_checkapi0$indicator!="HC_WIXQ_P_12Q",]
+
+
+all_checkapi0_issue_smallset <- all_checkapi0_issue %>%
+  anti_join(all_checkapi0_eyeballcheck, by = c("country", "year", "indicator")) %>%
+  anti_join(all_checkapi0_nodata,        by = c("country", "year", "indicator"))
+
+
+
+
+write.csv(
+  all_checkapi0,
+  file.path(check_root, "Checkapi_ALL.csv"),
+  row.names = FALSE
+)
+
+
+write.csv(
+  all_checkapi0_nodata,
+  file.path(check_root, "Checkapi_NODATA.csv"),
+  row.names = FALSE
+)
+
+
+write.csv(
+  all_checkapi0_eyeballcheck,
+  file.path(check_root, "Checkapi_eyeballchecked.csv"),
+  row.names = FALSE
+)
+
+write.csv(
+  all_checkapi0_issue_smallset,
+  file.path(check_root, "Checkapi_ALL_ISSUE_FINAL.csv"),
+  row.names = FALSE
+)
 
 
 

@@ -1,0 +1,127 @@
+---
+title: "API check summary"
+# author: "Qianyu Dong"
+date: "2025-11-16"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE )
+```
+
+
+
+```{r}
+
+source_path <- dirname(here::here())
+
+check_root <- file.path(source_path, "Gates-results", "check")
+
+all_checkapi0_nodata_read <- read.csv(
+  file.path(check_root, "Checkapi_NODATA.csv"),
+  stringsAsFactors = FALSE
+)
+
+all_checkapi0_eyeballcheck_read <- read.csv(
+  file.path(check_root, "Checkapi_eyeballchecked.csv"),
+  stringsAsFactors = FALSE
+)
+
+all_checkapi0_issue_smallset_read <- read.csv(
+  file.path(check_root, "Checkapi_ALL_ISSUE_FINAL.csv"),
+  stringsAsFactors = FALSE
+)
+
+
+all_checkapi1_issue_smallset_read <- read.csv(
+  file.path(check_root, "Checkapi_ALL_ISSUE_FINAL_after.csv"),
+  stringsAsFactors = FALSE
+)
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+November 2025 update include 13 countries and 24 surveys. Burkina Faso, Congo Democratic Republic, Ethiopia, Kenya, Mali, Mozambique, Nigeria, Rwanda, Sierra Leone, Senegal, and Tanzania each have two surveys, while South Africa and Zambia each have one survey. 20 indicators are evaluated for each survey, giving a total of 480 indicator results. 
+
+
+
+There are 452 results passed API check at national level, with absolute difference less than 0.01. `alt.strata = "v022"` is used to include all clusters when calculating national direct estimates. The Percentage of the de jure population in the lowest or second wealth quintile (HC_WIXQ_P_12Q) is compared to 0.4. 
+
+
+For the 28 remaining indicators, 12 have no data, based on both API and the data processing results. 
+
+
+```{r}
+knitr::kable(all_checkapi0_nodata_read[, c(2:5, 8)])
+```
+
+
+
+5 of them passed eyeball check, as some DHS API values are missing or on a different scale. 
+
+
+```{r}
+knitr::kable(all_checkapi0_eyeballcheck_read[, c(2:5, 8)])
+```
+
+
+Of the remaining 11 indicators, 7 are within an absolute difference of 0.02. 
+
+
+
+```{r}
+small_diff <- all_checkapi0_issue_smallset_read %>%
+    mutate(
+        abs_diff = abs(diff),
+        rank_abs_diff = rank(abs_diff, na.last = "keep")
+    ) %>%
+    filter(!is.na(abs_diff), abs_diff < 0.02) %>%
+    arrange(abs_diff) 
+knitr::kable(small_diff[, c(2:5, 8,9)])
+
+```
+
+
+
+
+
+The rest 4 have large differences or no processing code and are excluded from this round of updates.
+
+
+
+```{r}
+l_diff <- all_checkapi0_issue_smallset_read %>%
+  mutate(abs_diff = abs(diff)) %>%
+  filter(abs_diff > 0.02 | is.na(diff)) %>%
+  arrange(desc(abs_diff))
+knitr::kable(l_diff[, c(2:5, 8,9)])
+```
+
+
+
+The full comparison results are saved in GATES/Gates-results/check/Checkapi_ALL.csv
+
+
+The checking process was repeated  after fitting all the models, using the same set direct estimates as in the reports. The three indicators below are new disparities that occurred because we used usual way to set strata, and clusters with issues were not included. 
+
+```{r}
+
+all_checkapi1_new <- all_checkapi1_issue_smallset_read %>%
+  anti_join(all_checkapi0_issue_smallset_read, by = c("country", "year", "indicator")) 
+knitr::kable(all_checkapi1_new[, c(2:7)])
+
+```
+

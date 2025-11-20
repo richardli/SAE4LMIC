@@ -16,6 +16,7 @@ infolist <- read.csv(here(git_path, "info", "infolist.csv"))
 surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
 
 
+project_root <- rprojroot::find_root(rprojroot::is_here)
 
 
 #make result folders

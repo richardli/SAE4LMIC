@@ -126,11 +126,12 @@ dhs_survey_list <- dhs_survey_list[dhs_survey_list$SurveyYear>2000 & dhs_survey_
 
 # dhs_survey_list[dhs_survey_list$SurveyId==SurveyId_list[147],]
 
+main_dir="/Users/qianyu/Dropbox/DHS-indicators"
 
 output_dir=file.path(main_dir,"Step_3_Data","all_survey_est")
 
 
-for (i in which(dhs_survey_list$SurveyId == "ML2023DHS")){
+for (i in which(dhs_survey_list$SurveyId == "KE2022DHS")){
   print(i)
   tmp_cty_code <- dhs_survey_list$DHS_CountryCode[i]
   tmp_svy_year <- dhs_survey_list$SurveyYear[i]

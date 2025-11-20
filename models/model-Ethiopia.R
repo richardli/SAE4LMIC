@@ -13,7 +13,31 @@ print(source_path)
 # }
 
 # If special treatments are needed for some indicators, update the script below with if-statements
-# This loop use variace fix code in "model-core-newvarfix.R"
+# This loop use variance fix code in "model-core-newvarfix.R"
+
+
+# indicatorlist1<- c( "CO_MOBB_W_MOB", "CM_ECMR_C_NNF", "ED_LITR_W_LIT")
+
 for (indicator_to_run in indicatorlist) {
   source(here(git_path, "models", "model-core-newvarfix.R"))
 }
+
+
+
+## -------------------------------------------------------------------------##
+## ---------------------------- check results ------------------------------##
+## -------------------------------------------------------------------------##
+
+source(here(git_path, "misc", "check-modelresult.R"))
+
+check_tab <- check_model_results(
+  country_to_run = country_to_run,
+  indicatorlist = indicatorlist,
+  source_path    = source_path
+)
+
+
+print(check_tab)
+
+out_check <- file.path(source_path, "Gates-results/Results",country_to_run ,paste0(country_to_run,"_check_models.csv"))
+write.csv(check_tab, out_check, row.names = FALSE)
