@@ -39,15 +39,6 @@ shapeused<- read.csv(file.path(git_path,  "info", "shapefileList.csv"))
 
 source(here(git_path,  "plots/report_helper.R"))
 
-country="Nigeria"        
-
-
-country="Burkina Faso"        
-country="Congo Democratic Republic"        
-country="Tanzania"        
-country="Kenya"        
-country="Ethiopia"        
-country="Burkina Faso"        
 
 indicatorlist=ids=infolist$ID
 middle_path="Gates-results/Results"
@@ -68,31 +59,32 @@ countrylist= c(
                 "Sierra Leone"  ,    
                "Burkina Faso",
                "Ethiopia"  ,
+               "Mali",
                "Congo Democratic Republic"        
                )
 
 indicatorlist=c("CO_MOBB_W_MOB","ML_NETC_C_ITN","CH_DIAT_C_ORT","RH_PCCT_C_DY2","CH_VACC_C_MSL","ED_EDUC_W_SEH")
 
 
+
+# countrylist=c("Zambia")
 start <- proc.time()
 
 
 for (country in countrylist){ 
 print(paste0(country, " now"))
 {
-# 
-# 
-# 
-# savemaps_ridge(country=country,
-#                ad2_name=ad2_name,
-#                ad1_name=ad1_name,
-#                indicatorlist =indicatorlist,
-#                adm_name = adm_name,
-#                middle_path=middle_path,
-#                plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
-# 
-# 
-# print( "maps_ridge done ")
+
+savemaps_ridge(country=country,
+               ad2_name=ad2_name,
+               ad1_name=ad1_name,
+               indicatorlist =indicatorlist,
+               adm_name = adm_name,
+               middle_path=middle_path,
+               plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
+
+
+print( "maps_ridge done ")
 
 
 saveclustermap(
@@ -106,28 +98,24 @@ saveclustermap(
 
 print( "clustermap done ")
 
-# 
-# 
-# saveinterval_overlay(country=country,
-#                      ad2_name=ad2_name,
-#                      ad1_name=ad1_name,
-#                      indicatorlist =indicatorlist,
-#                      middle_path=middle_path,
-#                      plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
-# 
-# 
-# print( "interval_overlay done ")
-# 
-# 
-# 
-# 
-# savescatter( country=country,
-#              ad2_name= ad2_name,
-#              ad2_name_dir= ad2_name_dir,
-#              middle_path=middle_path,
-#              plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
-# 
-# print( "scatter done ")
+
+saveinterval_overlay(country=country,
+                     ad2_name=ad2_name,
+                     ad1_name=ad1_name,
+                     indicatorlist =indicatorlist,
+                     middle_path=middle_path,
+                     plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
+
+
+print( "interval_overlay done ")
+
+savescatter( country=country,
+             ad2_name= ad2_name,
+             ad2_name_dir= ad2_name_dir,
+             middle_path=middle_path,
+             plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
+
+print( "scatter done ")
 
 
 

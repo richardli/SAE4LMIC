@@ -138,7 +138,12 @@ get_dhs_filenames <- function(country, year) {
     krname <- "ZMKR71DT/ZMKR71FL.DTA"
     prname <- "ZMPR71DT/ZMPR71FL.DTA"
     brname <- "ZMBR71DT/ZMBR71FL.DTA"
-  }    else {
+  }    else if (country == "Zambia" & year == 2024) {
+    irname <- "ZMIR81DT/ZMIR81FL.DTA"
+    krname <- "ZMKR81DT/ZMKR81FL.DTA"
+    prname <- "ZMPR81DT/ZMPR81FL.DTA"
+    brname <- "ZMBR81DT/ZMBR81FL.DTA"
+  }  else {
     stop("No match found for this country and year.")
   }
 
@@ -315,6 +320,8 @@ res_adm0$res.natl$direct.est
 
 c(res_adm0$res.natl$direct.est
 ,vals)
+
+
 }
 
 
@@ -429,6 +436,14 @@ CHECK_API(country="South Africa",
 
 CHECK_API(country="Senegal",
           year=2023,
+          ind="RH_DELA_C_SKP"
+)
+
+
+
+
+CHECK_API(country="Zambia",
+          year=2024,
           ind="RH_DELA_C_SKP"
 )
 

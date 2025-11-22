@@ -14,7 +14,7 @@ header-includes:
   - '\usepackage{caption}'
   - '\captionsetup[table]{position=bottom}'
 params:
-  country: "Nigeria" 
+  country: "South Africa" 
   source_path: "/Users/qianyu/Dropbox/binary_code/pcg/GATES"
   middle_path: "Gates-results/ReportPlots"
 ---
@@ -139,6 +139,7 @@ image_dir <- normalizePath(
   winslash = "/", mustWork = TRUE
 )
 
+# ad1 maps: needs special ordering by infolist$ID
 files   <- get_image_files(
   image_dir   = image_dir,
   pattern     = "^ad1_map_.*\\.png$",
@@ -146,6 +147,7 @@ files   <- get_image_files(
   prefix      = "ad1_map_"
 )
 
+# everything else: just sorted list.files
 
 files_2 <- get_image_files(
   image_dir = image_dir,
@@ -190,11 +192,11 @@ files_7 <- get_image_files(
 prefix      = "interval-ad2-"
 )
 
-files_yr1 <- get_image_files2(
-  image_dir     = image_dir,
-  pattern       = paste0("^Basic-.*-", yr1, "\\.png$"),
-  indicator_ids = infolist$ID
-)
+# files_yr1 <- get_image_files2(
+#   image_dir     = image_dir,
+#   pattern       = paste0("^Basic-.*-", yr1, "\\.png$"),
+#   indicator_ids = infolist$ID
+# )
 
 files_yr2 <- get_image_files2(
   image_dir     = image_dir,
@@ -236,12 +238,21 @@ For each indicator, two sets of estimates are shown based on the latest and the 
 \newpage
 ## Country information
 
-DHS surveys included `r c1 ` clusters in `r yr1` and `r c2 ` clusters in `r yr2`. Table 1 presents national estimates for 20 indicators from the two survey years. The subnational prevalence results are provided for `r ad11` Admin-1 areas and `r ad12` Admin-2 areas in this report.
+DHS surveys included `r c1 ` clusters in `r yr1`. Table 1 presents national estimates for 20 indicators. The subnational prevalence results are provided for `r ad11` Admin-1 areas and `r ad12` Admin-2 areas in this report.
 
 
 ```{r }
-
+# The Rwanda 2025 DHS survey (Phase 9) is currently ongoing and its datasets will be available soon. 
+# The Kenya 2025 interim DHS survey (Phase 9)
+# The Nigeria 2023-24 DHS survey (Phase 8)
+# The Ethiopia 2024–25 DHS survey (Phase 8)
+# topic=surveyPrev::indicatorList[surveyPrev::indicatorList$ID %in% indicatorlist, c("ID","Topic")]
+# 
+# infolist=left_join(infolist,topic, by="ID" )
+# 
+# 
 tab3=read.csv(file.path(source_path,"Gates-results/estimates", country, "National3.csv"))
+
 tab=read.csv(file.path(source_path,"Gates-results/estimates", country, "National.csv"))
 pretty_names <- gsub("\\.", " ", names(tab)) 
 
@@ -268,11 +279,11 @@ idx <- table(tab2$group)
 # pretty_names <- c("Indicator", "DHS 2013", "DHS 2018")
 
 
-pretty_names <- c("Indicator", paste0("DHS ", yr1), paste0("DHS ", yr2))
+pretty_names <- c("Indicator", paste0("DHS ", yr1))
 
-kable(tab2[1:3], #%>% dplyr::select(Indicator, DHS.2013, DHS.2018),
+kable(tab2[1:2], #%>% dplyr::select(Indicator, DHS.2013, DHS.2018),
       col.names = pretty_names,
-      align = c("l", "r", "r"),
+      align = c("l", "r"),
       booktabs = TRUE, caption = "National estimates.")%>%  # ) 
 kable_styling(latex_options = "hold_position",
                 position = "center", 
@@ -280,7 +291,7 @@ kable_styling(latex_options = "hold_position",
               full_width = FALSE, 
               stripe_color = "gray!10") %>%
   row_spec(0, bold = TRUE) %>%
-  add_header_above(c(" " = 1, "Survey Year" = 2)) %>%
+  add_header_above(c(" " = 1, "Survey Year" = 1)) %>%
   pack_rows(index = idx)   # <— adds “Child Health”, “Characteristics”, “Maternal Health” sections
 
 
@@ -356,18 +367,18 @@ id  <- indicatorlists[i]
 def <- infolist$Full_definition[infolist$ID == id]
 short <- infolist$Description[infolist$ID == id]
 
-cat(sprintf("## %s\n\n", short))
+ cat(sprintf("## %s\n\n", short))
 
 cat(sprintf("`%s`: %s\n\n", id, def))
 
   
-cat("\\textbf{Sampling information for previous survey}\n\n")
-    cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
-      cat(paste0(tab3[tab3$ID==indicatorlists[i], ]$previous_no_ad2," Admin-2 areas have no samples, ",
-                 tab3[tab3$ID==indicatorlists[i], ]$previous_fixed)," Admin-2 areas have unstable variance." , "\n\n", sep = "")
-    
-  if (i <= length(files_yr1)) latex_img(files_yr1[i],  ".75\\linewidth")
-  cat("\\newpage\n\n")
+#cat("\\textbf{Sampling information for previous survey}\n\n")
+#    cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+#      cat(paste0(tab3[tab3$ID==indicatorlists[i], ]$previous_no_ad2," Admin-2 areas have no samples, ",
+#                 tab3[tab3$ID==indicatorlists[i], ]$previous_fixed)," Admin-2 areas have unstable variance." , "\n\n", sep = #"")
+#    
+#  if (i <= length(files_yr1)) latex_img(files_yr1[i],  ".75\\linewidth")
+#  cat("\\newpage\n\n")
 
   cat("\\textbf{Sampling information for current survey}\n\n")
    cat( infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")

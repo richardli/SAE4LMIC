@@ -37,7 +37,7 @@ output_dir=file.path(main_dir,"Step_3_Data","all_survey_est_sub")
 #ML2023DHS
 
 
-for (survey_id in "CD2023DHS") {
+for (survey_id in "ZM2024DHS") {
   print(paste("Fetching data for Survey:", survey_id))
   
   # Initialize variables for pagination
@@ -131,7 +131,7 @@ main_dir="/Users/qianyu/Dropbox/DHS-indicators"
 output_dir=file.path(main_dir,"Step_3_Data","all_survey_est")
 
 
-for (i in which(dhs_survey_list$SurveyId == "KE2022DHS")){
+for (i in which(dhs_survey_list$SurveyId == "ZM2024DHS")){
   print(i)
   tmp_cty_code <- dhs_survey_list$DHS_CountryCode[i]
   tmp_svy_year <- dhs_survey_list$SurveyYear[i]

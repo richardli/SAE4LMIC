@@ -79,12 +79,11 @@ countryList=c("Zambia",
 
 
 indicatorlist="RH_DELA_C_SKP"
-countryList=c("Mali","Senegal"
-       
-)
+countryList=c("Mali","Senegal")
 
 
-for (i in which(surveys$country %in% countryList) ) {
+#which(surveys$country %in% countryList
+for (i in 23 ) {
 
 
 

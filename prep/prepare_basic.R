@@ -58,10 +58,10 @@ countryList=c("Burkina Faso" ,
 #------------------------------------------------------------------#
 
 ## Admin note: replace with only a subset of countries when updating
-country <- countryList[1:length(countryList)]
+country <- "Zamnia"
 
-
-for (i in which(surveys$country %in% country) ) {
+#which(surveys$country %in% country)
+for (i in 23 ) {
   row <- surveys[i, ]
   country <- as.character(row$country)
   year <- as.character(row$year)

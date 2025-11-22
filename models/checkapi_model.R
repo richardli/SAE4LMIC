@@ -35,7 +35,7 @@ surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
 indicatorlist <- infolist$ID
 
 
-countryList= unique(surveys$country)
+countryList= "Zambia"#unique(surveys$country)
 indicatorlist=infolist$ID
 
 

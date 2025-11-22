@@ -534,6 +534,67 @@ exceedplot2<- function (x, exceed = TRUE, direction = 1, threshold = NA, geo = g
 }
 
 
+
+exceedplot3 <- function(
+    x,
+    exceed = TRUE,
+    direction = 1,
+    threshold = NA,
+    geo = geo,
+    by.geo = NULL,
+    ylim = NULL,
+    yr = "2022",
+    ...
+) {
+  if (is.na(threshold))
+    stop("A numerical threshold must be specified.")
+  
+  x_att <- attributes(x)
+  
+  
+  # if (is.na(threshold)) 
+  #   stop("A numerical threshold need to be specified.")
+  # x_att <- attributes(x)
+  # if (x_att$class %in% c( "directEST","fhModel", "clusterModel")) {
+  #   if ("admin2_post" %in% x_att$names) {
+  #     samples = x$admin2_post
+  #   }
+  #   else {
+  #     samples = x$admin1_post
+  #   }
+  # }
+  
+  # determine samples
+  samples <- if ("admin2_post" %in% x_att$names) x$admin2_post else x$admin1_post
+  
+  # compute probability
+  dat <- data.frame(region.name = x_att$domain.names, value = NA_real_)
+  for (i in seq_len(ncol(samples))) {
+    dat$value[i] <- mean(samples[, i] > threshold)
+    if (!exceed)
+      dat$value[i] <- mean(samples[, i] < threshold)
+  }
+  
+  # ---- KEY FIX: rename 'value' to the year label ----
+  names(dat)[names(dat) == "value"] <- yr
+  
+  # ---- IMPORTANT FIX: use `variables` not `value` ----
+  g <- SUMMER::mapPlot(
+    data = dat,
+    geo = geo,
+    by.data = "region.name",
+    by.geo = by.geo,
+    variables = yr,       # <-- this triggers SUMMER header
+    is.long = FALSE,      # wide format
+    legend.label = "Probability",
+    direction = direction,
+    ylim = ylim,
+    ...
+  )
+  
+  return(g)
+}
+
 library(tibble)
 
 library(rmapshaper)
@@ -544,10 +605,18 @@ library(ggplot2)
 library(RColorBrewer)
 library(patchwork)
 
-source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
-infolist <- read.csv(file.path(source_path, "infolist.csv"))
-surveys <- read.csv(file.path(source_path, "surveyslist.csv"))
-indicatorlist=infolist$ID
+library(here)
+# source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
+source_path <- dirname(here::here())
+# source_path is the path for this github repository 
+git_path <- here::here()
+
+
+
+
+infolist <- read.csv(file.path(git_path, "info", "infolist.csv"))
+surveys <- read.csv(file.path(git_path,  "info", "surveyslist.csv"))
+
 
 
 country="Nigeria"
@@ -557,12 +626,22 @@ indicatorlist =infolist$ID
 
 
 
+
+country="Kenya"
+ad1_name="new_res_adm1-"
+ad2_name="new_FH_adm2_fix_nest-"
+indicator="RH_PCCT_C_DY2"
+adm_name = "new_res_adm0-"
+
 adm_name = "new_res_adm0-"
 country="Burkina Faso"
 ad1_name="new_res_adm1-"
 ad2_name="new_FH_adm2_fix_nest-"
-indicatorlist= "CO_MOBB_W_MOB"
-indicator="RH_PCCT_C_DY2"
+# indicatorlist= "CO_MOBB_W_MOB"
+
+middle_path="Gates-results/Results"
+plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country)
+
 
 savemaps_ridge<-function(country="Nigeria",
                    ad2_name="new_FH_adm2_fix_nest-",
@@ -789,16 +868,19 @@ for (indicator in indicatorlist ) {
       
       
       legend <- paste0("Probability\nExceeding ", thre1, "%\n")
-      exceedPlot(old, threshold = thre1,
-                 exceed = TRUE,
-                 # value_col = as.character(yr1)
-                border = "gray80", size = 0,
-                 geo = poly.adm2, by.geo = "admin2.name.full", ylim = c(0, 1)) +
+      exceedplot3(
+        old,
+        threshold = thre1,
+        exceed = TRUE,
+        yr = as.character(yr1),   # "2022"
+        direction = infolist[infolist$ID == indicator, ]$direction,
+        geo = poly.adm2,
+        by.geo = "admin2.name.full",
+        border = "gray80",
+        size = 0
+      )+
         scale_fill_distiller(legend, palette = "Spectral",
                              direction =  infolist[infolist$ID == indicator, ]$direction     )
-      
-      
-      
       
       
     } else {
@@ -810,14 +892,21 @@ for (indicator in indicatorlist ) {
       thre2=tab2[tab2$ID==indicator,]$current_est
       # res_adm11$admin1_post=res_adm11$admin1_post*100
       new$admin2_post=new$admin2_post*100
+      # names(new$res.admin2)[names(new$res.admin2) == value_col] <- yr2
       
       legend <- paste0("Probability\nExceeding ", thre2, "%\n")
-      exceedPlot(new, threshold = thre2,
-                 exceed = TRUE,
-                 # value_col = as.character(yr2),
-                 direction =infolist[infolist$ID == indicator, ]$direction
-                 ,  border = "gray80", size = 0,
-                 geo = poly.adm2, by.geo = "admin2.name.full", ylim = c(0, 1)) +
+ 
+      exceedplot3(
+        new,
+        threshold = thre2,
+        exceed = TRUE,
+        yr = as.character(yr2),   # "2022"
+        direction = infolist[infolist$ID == indicator, ]$direction,
+        geo = poly.adm2,
+        by.geo = "admin2.name.full",
+        border = "gray80",
+        size = 0
+      )+
         scale_fill_distiller(legend, palette = "Spectral",
                              direction =  infolist[infolist$ID == indicator, ]$direction     )
       
@@ -1117,11 +1206,27 @@ for (indicator in indicatorlist ) {
       
       
       legend <- paste0("Probability\nExceeding ", thre1, "%\n")
-      exceedplot2(res_adm11, threshold = thre1,
-                 exceed = TRUE,
-                 # value_col = as.character(yr1),
-                 border = "gray80", size = 0,
-                 geo = poly.adm1, by.geo = "NAME_1", ylim = c(0, 1)) +
+      # exceedplot2(res_adm11, threshold = thre1,
+      #            exceed = TRUE,
+      #            # value_col = as.character(yr1),
+      #            border = "gray80", size = 0,
+      #            geo = poly.adm1, by.geo = "NAME_1", ylim = c(0, 1)) +
+      #   scale_fill_distiller(legend, palette = "Spectral",
+      #                        direction =  infolist[infolist$ID == indicator, ]$direction     )
+      # 
+      # 
+      
+      exceedplot3(
+        res_adm11,
+        threshold = thre1,
+        exceed = TRUE,
+        yr = as.character(yr1),   # "2022"
+        direction = infolist[infolist$ID == indicator, ]$direction,
+        geo = poly.adm1,
+        by.geo = "NAME_1",
+        border = "gray80",
+        size = 0
+      )+
         scale_fill_distiller(legend, palette = "Spectral",
                              direction =  infolist[infolist$ID == indicator, ]$direction     )
       
@@ -1135,19 +1240,26 @@ for (indicator in indicatorlist ) {
     g5_right <- if (ok12) {
       
       # thre1=tab2[tab2$ID==indicator,]$previous_est
-      # thre2=tab2[tab2$ID==indicator,]$current_est*100
+      thre2=tab2[tab2$ID==indicator,]$current_est
       # res_adm11$admin1_post=res_adm11$admin1_post*100
       res_adm12$admin1_post=res_adm12$admin1_post*100
       
       legend <- paste0("Probability\nExceeding ", thre2, "%\n")
-      exceedplot2(res_adm12, threshold = thre2,
-                 exceed = TRUE,
-                 # value_col = as.character(yr2),
-                 direction =       infolist[infolist$ID == indicator, ]$direction
-                 ,  border = "gray80", size = 0,
-                 geo = poly.adm1, by.geo = "NAME_1", ylim = c(0, 1)) +
-        scale_fill_distiller(legend, palette = "Spectral",
+
+      
+      exceedplot3(
+        res_adm12,
+        threshold = thre2,
+        exceed = TRUE,
+        yr = as.character(yr2),   # "2022"
+        direction = infolist[infolist$ID == indicator, ]$direction,
+        geo = poly.adm1,
+        by.geo = "NAME_1",
+        border = "gray80",
+        size = 0
+      )+scale_fill_distiller(legend, palette = "Spectral",
                              direction =  infolist[infolist$ID == indicator, ]$direction     )
+      
       
     } else {
       make_placeholder(yr2, "Exceedance")
@@ -1328,10 +1440,10 @@ savemaps_ridge(country="Nigeria",
 savemaps_ridge(country="Burkina Faso",
                ad2_name="new_FH_adm2_fix_nest-",
                ad1_name="new_res_adm1-",
-               indicatorlist ="RH_PCCT_C_DY2",
+               indicatorlist ="CO_MOBB_W_MOB",
                adm_name = "new_res_adm0-",
                middle_path="Gates-results/Results",
-               plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
+               plot_path_c=file.path(source_path,"Gates-results/ReportPlots","Burkina Faso"))
 
 
 

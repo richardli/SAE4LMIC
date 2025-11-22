@@ -64,11 +64,76 @@ save_tab1 <- function(country,
 
 
 # Table 3: number of no admin 2 and unstable variance 
+# 
+# save_tab3 <- function(country,
+#                       ad2_name = "new_res_adm2_fix-",
+#                       ids=infolist$ID,
+#                       middle_path="Gates-results/Results",
+#                       out_middle="Gates-results/estimates"
+# ) {
+#   
+#   indicators=infolist$ID
+#   # years to use
+#   yrs_all <- sort(surveys$year[surveys$country == country])
+#   if (length(yrs_all) == 0) {
+#     message("No surveys for ", country)
+#     return(invisible(NULL))
+#   }
+#   
+#   if (identical(country, "South Africa")) {
+#     years <- 2016L
+#     labels <- c("current")
+#   } else {
+#     # choose "current" = latest year; "previous" = latest-1 (if exists)
+#     if (length(yrs_all) >= 2) {
+#       years <- tail(yrs_all, 2)
+#       labels <- c("previous", "current")
+#     } else {
+#       years <- tail(yrs_all, 1)
+#       labels <- c("current")
+#     }
+#   }
+#   
+#   # helper: read qfile and compute (no_ad2, fixed)
+#   get_triplet <- function(ind, yr) {
+#     results_path  <- file.path(source_path, middle_path, country, yr)
+#     qfile_adm2   <- file.path(results_path, paste0(ad2_name, ind, ".qs"))
+#     if (!file.exists(qfile_adm2)) return(c(NA_real_, NA_real_))
+#     x <- tryCatch(qs::qread(qfile_adm2), error = function(e) NULL)
+#     if (is.null(x)) return(c(NA_real_, NA_real_))
+#     
+#     no_ad2 <- tryCatch(
+#       nrow(x$data.info) - nrow(x$res.admin2),
+#       error = function(e) NA_real_
+#     )
+#     fixed <- tryCatch(length(x$fixed_areas), error = function(e) NA_real_)
+#     c(no_ad2, fixed)
+#   }
+#   
+#   # build rows for each indicator
+#   rows <- lapply(indicators, function(ind) {
+#     vals <- unlist(lapply(years, function(yr) get_triplet(ind, yr)))
+#     data.frame(ID = ind, t(vals), check.names = FALSE)
+#   })
+#   tab3 <- do.call(rbind, rows)
+#   
+#   # name the columns
+#   year_cols <- unlist(lapply(labels, function(lbl) paste0(lbl, c("_no_ad2", "_fixed"))))
+#   names(tab3) <- c("ID", year_cols)
+#   
+#   # write CSV
+#   out_dir <- file.path(source_path,out_middle, country)
+#   out_file <- file.path(out_dir, "National3.csv")
+#   write.csv(tab3, out_file, row.names = FALSE)
+#   message("Saved: ", out_file)
+#   
+#   invisible(tab3)
+# }
+
 
 save_tab3 <- function(country,
                       ad2_name_dir=  "new_res_adm2-" ,
                       ad2_name_fix=  "new_res_adm2_fix-",
-                      
                       ids=infolist$ID,
                       middle_path="Gates-results/Results",
                       out_middle="Gates-results/estimates"
@@ -134,6 +199,11 @@ save_tab3 <- function(country,
   
   invisible(tab3)
 }
+
+
+
+
+
 
 
 # Table 456: number of no admin 2 and unstable variance 
@@ -252,7 +322,7 @@ save_tab456 <- function(country,
 
 
 ########## ########## ########## 
-########## PLOTS      ##########
+########## PLOTS    ##########
 ########## ########## ########## 
 
 
@@ -267,7 +337,7 @@ save_tab456 <- function(country,
 # report_map.R
 # admin 1 and admin 2 MAPs for 1)prevalence, 2)length of credible interval, and 3) exceedance. "ad2_map_", "ad1_map_"
 # admin 1 ridge plot :  "ridge_"
-# hepler: save_tab2_from_files(), has_data(), make_placeholder(),ridgePlot1(),exceedPlot1()
+# hepler: save_tab2_from_files(), has_data(), make_placeholder(),ridgePlot1(),exceedPlot1(), exceedplot2()
 ####################
 
 
@@ -295,23 +365,14 @@ save_tab2_from_files <- function(country, adm_name = "res_adm0-", ids = indicato
   one_row <- function(ind) {
     mat <- do.call(rbind, lapply(years, function(yr) read_triplet(ind, yr)))
     colnames(mat) <- c("est", "lower", "upper")
+    ok <- which(!is.na(mat[, "est"]))
     
-    # default NA triplets
-    prev <- rep(NA_real_, 3)
-    curr <- rep(NA_real_, 3)
-    
-    # first row = previous year (yr1)
-    if (nrow(mat) >= 1 && !all(is.na(mat[1, ]))) {
-      prev <- mat[1, ]
-    }
-    
-    # second row = current year (yr2)
-    if (nrow(mat) >= 2 && !all(is.na(mat[2, ]))) {
-      curr <- mat[2, ]
-    }
+    prev <- c(NA_real_, NA_real_, NA_real_)
+    curr <- c(NA_real_, NA_real_, NA_real_)
+    if (length(ok) >= 1) curr <- mat[ok[length(ok)], ]
+    if (length(ok) >= 2) prev <- mat[ok[length(ok) - 1], ]
     
     prev <- fmt_pct0(prev); curr <- fmt_pct0(curr)
-    prev <- unname(prev);   curr <- unname(curr)
     
     if (identical(country, "South Africa")) {
       data.frame(
@@ -319,7 +380,7 @@ save_tab2_from_files <- function(country, adm_name = "res_adm0-", ids = indicato
         current_est   = curr[1],
         current_lower = curr[2],
         current_upper = curr[3],
-        check.names   = FALSE
+        check.names = FALSE
       )
     } else {
       data.frame(
@@ -330,7 +391,7 @@ save_tab2_from_files <- function(country, adm_name = "res_adm0-", ids = indicato
         current_est    = curr[1],
         current_lower  = curr[2],
         current_upper  = curr[3],
-        check.names    = FALSE
+        check.names = FALSE
       )
     }
   }
@@ -365,6 +426,7 @@ make_placeholder <- function(title_left, legend_title) {
              size = 3.5) +
     theme(plot.background = element_rect(fill = "grey95", color = NA))
 }
+ 
 ridgePlot1<-function (x = NULL, nsim = 1000, draws = NULL, year.plot = NULL,
                       year_plot =NULL,
                       strata.plot = NULL, strata_plot = NULL,
@@ -714,7 +776,7 @@ ridgePlot1<-function (x = NULL, nsim = 1000, draws = NULL, year.plot = NULL,
 
 
 
-
+#for two outcomes
 exceedPlot1 <- function(x, exceed = TRUE, direction = 1, threshold,
                         geo, by.geo = NULL, ylim = NULL,
                         facet_var = "year", facet_labels = NULL, ...) {
@@ -773,37 +835,66 @@ exceedPlot1 <- function(x, exceed = TRUE, direction = 1, threshold,
   return(g)
 }
 
-
-
-
-exceedplot2<- function (x, exceed = TRUE, direction = 1, threshold = NA, geo = geo, 
-                        by.geo = NULL, ylim = NULL, ...) {
-  if (is.na(threshold)) 
-    stop("A numerical threshold need to be specified.")
+#for single map
+exceedplot3 <- function(
+    x,
+    exceed = TRUE,
+    direction = 1,
+    threshold = NA,
+    geo = geo,
+    by.geo = NULL,
+    ylim = NULL,
+    yr = "2022",
+    ...
+) {
+  if (is.na(threshold))
+    stop("A numerical threshold must be specified.")
+  
   x_att <- attributes(x)
-  if (x_att$class %in% c( "directEST","fhModel", "clusterModel")) {
-    if ("admin2_post" %in% x_att$names) {
-      samples = x$admin2_post
-    }
-    else {
-      samples = x$admin1_post
-    }
+  
+  
+  # if (is.na(threshold)) 
+  #   stop("A numerical threshold need to be specified.")
+  # x_att <- attributes(x)
+  # if (x_att$class %in% c( "directEST","fhModel", "clusterModel")) {
+  #   if ("admin2_post" %in% x_att$names) {
+  #     samples = x$admin2_post
+  #   }
+  #   else {
+  #     samples = x$admin1_post
+  #   }
+  # }
+  
+  # determine samples
+  samples <- if ("admin2_post" %in% x_att$names) x$admin2_post else x$admin1_post
+  
+  # compute probability
+  dat <- data.frame(region.name = x_att$domain.names, value = NA_real_)
+  for (i in seq_len(ncol(samples))) {
+    dat$value[i] <- mean(samples[, i] > threshold)
+    if (!exceed)
+      dat$value[i] <- mean(samples[, i] < threshold)
   }
-  dat <- data.frame(region.name = x_att$domain.names, value = NA)
-  for (i in 1:dim(samples)[2]) {
-    dat$value[i] <- sum(samples[, i] > threshold)/dim(samples)[1]
-    if (!exceed) 
-      dat$value[i] <- sum(samples[, i] < threshold)/dim(samples)[1]
-  }
-  g <- SUMMER::mapPlot(data = dat, geo = geo, by.data = "region.name", 
-                       by.geo = by.geo, variable = "value", removetab = TRUE, 
-                       legend.label = "Probability", direction = direction, 
-                       ylim = ylim, ...)
+  
+  # ---- KEY FIX: rename 'value' to the year label ----
+  names(dat)[names(dat) == "value"] <- yr
+  
+  # ---- IMPORTANT FIX: use `variables` not `value` ----
+  g <- SUMMER::mapPlot(
+    data = dat,
+    geo = geo,
+    by.data = "region.name",
+    by.geo = by.geo,
+    variables = yr,       # <-- this triggers SUMMER header
+    is.long = FALSE,      # wide format
+    legend.label = "Probability",
+    direction = direction,
+    ylim = ylim,
+    ...
+  )
+  
   return(g)
 }
-
-
-
 
 savemaps_ridge<-function(country="Nigeria",
                          ad2_name="new_FH_adm2_fix_nest-",
@@ -824,7 +915,9 @@ savemaps_ridge<-function(country="Nigeria",
   tab2<-save_tab2_from_files(country,adm_name =adm_name,infolist$ID)
   # ad2_name<-"new_FH_adm2_fix_nest-"
   # country="Nigeria"X
-  results_path<-file.path(source_path, middle_path, country, yr1)
+  
+
+  results_path<-file.path(source_path, middle_path, country, yr2)
   load(file.path(results_path, "basic.Rdata"))
   # poly.adm2 <- ms_simplify(poly.adm2, keep = 0.1, keep_shapes = TRUE)  # keep ~10% of vertices
   # plot_path_c<- file.path(source_path,"Gates-results/ReportPlots",country)
@@ -848,8 +941,8 @@ savemaps_ridge<-function(country="Nigeria",
     qfile_adm2 <- file.path(results_path_yr2, paste0(ad2_name, indicator, ".qs"))
     
     
-    old <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("tryCatched: Failed to read ", qfile_adm1, ": ", e$message); return(NULL) })
-    new <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("tryCatched: Failed to read ", qfile_adm2, ": ", e$message); return(NULL) })
+    old <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("tryCatched: Failed to read ", qfile_adm1, ": ", e$message); return("failed") })
+    new <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("tryCatched: Failed to read ", qfile_adm2, ": ", e$message); return("failed") })
     
     
     # old <- ad2_store[[iso3]][[as.character(yr1)]][[indicator]]
@@ -1030,16 +1123,19 @@ savemaps_ridge<-function(country="Nigeria",
         
         
         legend <- paste0("Probability\nExceeding ", thre1, "%\n")
-        exceedPlot(old, threshold = thre1,
-                   exceed = TRUE,
-                   # value_col = as.character(yr1)
-                   ,  border = "gray80", size = 0,
-                   geo = poly.adm2, by.geo = "admin2.name.full", ylim = c(0, 1)) +
+        exceedplot3(
+          old,
+          threshold = thre1,
+          exceed = TRUE,
+          yr = as.character(yr1),   # "2022"
+          direction = infolist[infolist$ID == indicator, ]$direction,
+          geo = poly.adm2,
+          by.geo = "admin2.name.full",
+          border = "gray80",
+          size = 0
+        )+
           scale_fill_distiller(legend, palette = "Spectral",
                                direction =  infolist[infolist$ID == indicator, ]$direction     )
-        
-        
-        
         
         
       } else {
@@ -1051,14 +1147,21 @@ savemaps_ridge<-function(country="Nigeria",
         thre2=tab2[tab2$ID==indicator,]$current_est
         # res_adm11$admin1_post=res_adm11$admin1_post*100
         new$admin2_post=new$admin2_post*100
+        # names(new$res.admin2)[names(new$res.admin2) == value_col] <- yr2
         
         legend <- paste0("Probability\nExceeding ", thre2, "%\n")
-        exceedPlot(new, threshold = thre2,
-                   exceed = TRUE,
-                   # value_col = as.character(yr2),
-                   direction =infolist[infolist$ID == indicator, ]$direction
-                   ,  border = "gray80", size = 0,
-                   geo = poly.adm2, by.geo = "admin2.name.full", ylim = c(0, 1)) +
+        
+        exceedplot3(
+          new,
+          threshold = thre2,
+          exceed = TRUE,
+          yr = as.character(yr2),   # "2022"
+          direction = infolist[infolist$ID == indicator, ]$direction,
+          geo = poly.adm2,
+          by.geo = "admin2.name.full",
+          border = "gray80",
+          size = 0
+        )+
           scale_fill_distiller(legend, palette = "Spectral",
                                direction =  infolist[infolist$ID == indicator, ]$direction     )
         
@@ -1114,8 +1217,8 @@ savemaps_ridge<-function(country="Nigeria",
     qfile_adm2 <- file.path(results_path_yr2, paste0(ad1_name, indicator, ".qs"))
     
     
-    res_adm11 <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("tryCatched: Failed to read ", qfile_adm1, ": ", e$message); return(NULL) })
-    res_adm12 <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("tryCatched:Failed to read ", qfile_adm2, ": ", e$message); return(NULL) })
+    res_adm11 <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("tryCatched: Failed to read ", qfile_adm1, ": ", e$message); return("failed") })
+    res_adm12 <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("tryCatched:Failed to read ", qfile_adm2, ": ", e$message); return("failed") })
     
     # res_adm11 <- ad1_store[[iso3]][[as.character(yr1)]][[indicator]]
     # res_adm12 <- ad1_store[[iso3]][[as.character(yr2)]][[indicator]]
@@ -1358,11 +1461,27 @@ savemaps_ridge<-function(country="Nigeria",
         
         
         legend <- paste0("Probability\nExceeding ", thre1, "%\n")
-        exceedplot2(res_adm11, threshold = thre1,
-                    exceed = TRUE,
-                    # value_col = as.character(yr1),
-                    border = "gray80", size = 0,
-                    geo = poly.adm1, by.geo = "NAME_1", ylim = c(0, 1)) +
+        # exceedplot2(res_adm11, threshold = thre1,
+        #            exceed = TRUE,
+        #            # value_col = as.character(yr1),
+        #            border = "gray80", size = 0,
+        #            geo = poly.adm1, by.geo = "NAME_1", ylim = c(0, 1)) +
+        #   scale_fill_distiller(legend, palette = "Spectral",
+        #                        direction =  infolist[infolist$ID == indicator, ]$direction     )
+        # 
+        # 
+        
+        exceedplot3(
+          res_adm11,
+          threshold = thre1,
+          exceed = TRUE,
+          yr = as.character(yr1),   # "2022"
+          direction = infolist[infolist$ID == indicator, ]$direction,
+          geo = poly.adm1,
+          by.geo = "NAME_1",
+          border = "gray80",
+          size = 0
+        )+
           scale_fill_distiller(legend, palette = "Spectral",
                                direction =  infolist[infolist$ID == indicator, ]$direction     )
         
@@ -1376,19 +1495,26 @@ savemaps_ridge<-function(country="Nigeria",
       g5_right <- if (ok12) {
         
         # thre1=tab2[tab2$ID==indicator,]$previous_est
-        # thre2=tab2[tab2$ID==indicator,]$current_est*100
+        thre2=tab2[tab2$ID==indicator,]$current_est
         # res_adm11$admin1_post=res_adm11$admin1_post*100
         res_adm12$admin1_post=res_adm12$admin1_post*100
         
         legend <- paste0("Probability\nExceeding ", thre2, "%\n")
-        exceedplot2(res_adm12, threshold = thre2,
-                    exceed = TRUE,
-                    # value_col = as.character(yr2),
-                    direction =       infolist[infolist$ID == indicator, ]$direction
-                    ,  border = "gray80", size = 0,
-                    geo = poly.adm1, by.geo = "NAME_1", ylim = c(0, 1)) +
-          scale_fill_distiller(legend, palette = "Spectral",
+        
+        
+        exceedplot3(
+          res_adm12,
+          threshold = thre2,
+          exceed = TRUE,
+          yr = as.character(yr2),   # "2022"
+          direction = infolist[infolist$ID == indicator, ]$direction,
+          geo = poly.adm1,
+          by.geo = "NAME_1",
+          border = "gray80",
+          size = 0
+        )+scale_fill_distiller(legend, palette = "Spectral",
                                direction =  infolist[infolist$ID == indicator, ]$direction     )
+        
         
       } else {
         make_placeholder(yr2, "Exceedance")
@@ -1559,6 +1685,7 @@ savemaps_ridge<-function(country="Nigeria",
 
 
 
+
 ####################
 # saveclustermap 
 # report_clustermap.R
@@ -1716,15 +1843,9 @@ saveclustermap<-function(
       
       
       if (!file.exists(qfile)) {
-        
-        final_plot= make_placeholder("Sampling information",yr )
-        
-        
-        # message("Skipping: ", indicator, " (file not found)")
-        # next  # move to next indicator
-      } else{
-      
-      
+        message("Skipping: ", indicator, " (file not found)")
+        next  # move to next indicator
+      }
       loaded_data <- qread(qfile)
       
       data<-loaded_data
@@ -1777,14 +1898,14 @@ saveclustermap<-function(
       
       final_plot <- (p1 | p2) / (p3 | p4) / (p5 | p6) +
         plot_layout(heights = c(1, 1, 1), widths = c(1, 1))
-  
-      }
       
       ggsave(
         final_plot,
         filename = file.path(plot_path_c, paste0("Basic-", indicator,"-", yr, ".png")),
         width = 10, height = 12, dpi = 300
       )
+      
+      
     }
     
     
@@ -2084,6 +2205,8 @@ intevalplot1=intervalplot1<-function (admin = 0, compare = FALSE, model = NULL, 
   }
   
 }
+
+
 
 
 
@@ -2522,7 +2645,11 @@ saveinterval_overlay<-function(
         # +
         # ggtitle(paste0(infolist[infolist$ID==indicator,]$Description))
         
-      } else {
+      } else if(!ok11 && !ok12 && !ok21 && !ok22
+      ){
+        Overlay=make_placeholder("overlay", "overlay")
+        
+      }else {
         # ----- at least one year missing -----
         # ----- compute metrics only when present -----
         
@@ -2636,6 +2763,7 @@ saveinterval_overlay<-function(
   }
   
 }
+
 
 
 ####################

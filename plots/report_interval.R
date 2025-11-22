@@ -727,7 +727,11 @@ for(country in country){
       # +
       # ggtitle(paste0(infolist[infolist$ID==indicator,]$Description))
       
-    } else {
+    } else if(!ok11 && !ok12 && !ok21 && !ok22
+){
+      Overlay=make_placeholder("overlay", "overlay")
+      
+    }else {
       # ----- at least one year missing -----
       # ----- compute metrics only when present -----
       

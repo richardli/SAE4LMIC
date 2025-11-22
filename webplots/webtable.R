@@ -116,7 +116,7 @@ write.csv(res_tbl,
           file = file.path(source_path, "Gates-results/estimates",country,"combined_results.csv"),
           row.names = FALSE)
 
-countrList="Tanzania" 
+countrList="Zambia" 
 
 for (ctry in countrList) {
   message("Processing: ", ctry)
