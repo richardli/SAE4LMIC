@@ -17,7 +17,7 @@ save_tab2_from_files <- function(country, adm_name = "res_adm0-", ids = indicato
   }
   
   # format helper (whole %)
-  fmt_pct0 <- function(x) ifelse(is.na(x), NA, round(100 * x, 0))
+  fmt_pct0 <- function(x) ifelse(is.na(x), NA, round(x, 2))
   
   # one row per indicator
   one_row <- function(ind) {
@@ -487,7 +487,7 @@ exceedPlot1 <- function(x, exceed = TRUE, direction = 1, threshold,
       is.long = TRUE, variable = facet_var, value = "value",
       legend.label = "Exceedance\nProbability",
       direction = direction, ylim = ylim, removetab = TRUE, ...
-    )
+    ) 
     
   } else {
     # --- single model (no facets)
@@ -627,7 +627,7 @@ indicatorlist =infolist$ID
 
 
 
-country="Kenya"
+country=""
 ad1_name="new_res_adm1-"
 ad2_name="new_FH_adm2_fix_nest-"
 indicator="RH_PCCT_C_DY2"
@@ -649,7 +649,8 @@ savemaps_ridge<-function(country="Nigeria",
                    indicatorlist =infolist$ID,
                    adm_name = "new_res_adm0-",
                    middle_path="Gates-results/Results",
-                   plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country)
+                   plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country),
+                   dpi = 150
                    ){
   
 
@@ -673,8 +674,43 @@ for (indicator in indicatorlist ) {
   } else {
     color.paletteHERE <- brewer.pal(5, "RdYlGn")
   }
+   
   
-
+  if(indicator %in% c("CM_ECMR_C_NNF")){
+    
+    thre1 = tab2[tab2$ID==indicator, ]$previous_est 
+    thre2 = tab2[tab2$ID==indicator, ]$current_est  
+    
+    LABELS = function(x) x * 1000
+    scale_fill_gradientn_prevalence<-scale_fill_gradientn(colors = color.paletteHERE, name = "Rate",labels = LABELS)
+    
+    facet_labels = c(
+      paste0(yr1, " National: ", thre1* 1000, " per 1,000"),
+      paste0(yr2, " National: ", thre2* 1000, " per 1,000")
+    )
+    
+    exceedlegend_singleyear1 <- paste0("Probability\nExceeding ", thre1*1000 )
+    exceedlegend_singleyear2 <- paste0("Probability\nExceeding ", thre2*1000 )
+    
+    
+  } else {
+    
+    thre1 = tab2[tab2$ID==indicator, ]$previous_est 
+    thre2 = tab2[tab2$ID==indicator, ]$current_est  
+    
+    LABELS = scales::percent_format(accuracy = 1)
+    scale_fill_gradientn_prevalence<-scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence",labels = LABELS)
+    facet_labels = c(
+      paste0(yr1, " National: ", thre1* 100, "%"),
+      paste0(yr2, " National: ", thre2* 100, "%")
+    )
+    exceedlegend_singleyear1 <- paste0("Probability\nExceeding ", thre1, "%\n")
+    exceedlegend_singleyear2 <- paste0("Probability\nExceeding ", thre2, "%\n")
+    
+  }
+  
+  
+  
   
   # yr1=min(surveys[surveys$country==country,]$year)
   results_path_yr1 <- file.path(source_path, middle_path, country, yr1)
@@ -721,7 +757,8 @@ for (indicator in indicatorlist ) {
       # legend.label = year_label,
       size = .05,
       border = "gray50"
-    ) + scale_layer
+    ) +
+     scale_layer
     # + ggtitle(as.character(year_label))
     mp
   }
@@ -730,32 +767,36 @@ for (indicator in indicatorlist ) {
   if (ok11) {
 
     
-    out1 <- old$res.admin2[, c("admin2.name.full", "mean", "sd",
+    out1 <- old$res.admin2[, c("admin2.name.full", "median", "sd",
                                 "lower", "upper", "cv2")]
     colnames(out1)[c(2)] <- c("Prevalence")
     out1$version <- yr1
-    out1$Prevalence= out1$Prevalence*100
-    out1$upper= out1$upper*100
-    out1$lower= out1$lower*100
+
     out1$width <- out1$upper - out1$lower
+    # out1$oddratio<- log( (out1$Prevalence/(1-out1$Prevalence)) / ( thre1/ (1-thre1)))
+    out1$oddratio<- ( (out1$Prevalence/(1-out1$Prevalence)) / ( thre1/ (1-thre1)))
+    
     
   }
   
   if (ok12) {
   
     
-    out11 <- new$res.admin2[, c("admin2.name.full", "mean", "sd",
+    out11 <- new$res.admin2[, c("admin2.name.full", "median", "sd",
                                  "lower", "upper", "cv2")]
     colnames(out11)[c(2)] <- c("Prevalence")
     out11$version <- yr2
-    out11$Prevalence= out11$Prevalence*100
-    out11$upper= out11$upper*100
-    out11$lower= out11$lower*100
+
     out11$width <- out11$upper - out11$lower
+    # out11$oddratio<- log( (out11$Prevalence/(1-out11$Prevalence)) / ( thre2/ (1-thre2)))
+    out11$oddratio<- ( (out11$Prevalence/(1-out11$Prevalence)) / ( thre2/ (1-thre2)))
+    
+    
+    exceedlegend_singleyear <- paste0("Probability\nExceeding ", thre1, "%\n")
     
   }
   
-  
+ 
   if (ok11 && ok12) {
     # ----- both years available -----
     outadm2 <- rbind(out1, out11)
@@ -768,40 +809,33 @@ for (indicator in indicatorlist ) {
                   by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
                   variable = "version", value = "Prevalence", legend.label = "Prevalence",
                   direction = -1, ncol = 2, size = .05, border = "gray50") +
-      scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence")
-    
-    # g2 <- mapPlot(data = outadm2, geo = poly.adm2,
-    #               by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
-    #               variable = "version", value = "sd", legend.label = "sd",
-    #               ncol = 2, size = .05, border = "gray50") +
-    #   scale_fill_viridis_c("sd", option = "F", direction = -1)
-    #
-    # g3 <- mapPlot(data = outadm2, geo = poly.adm2,
-    #               by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
-    #               variable = "version", value =  legend.label = 
-    #               ncol = 2, size = .05, border = "gray50") +
-    #   scale_fill_viridis_c( option = "G", direction = -1)
-    
+                    scale_fill_gradientn_prevalence
+
     g4 <- mapPlot(data = outadm2, geo = poly.adm2,
                   by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
                   variable = "version", value = "width", legend.label = "90% CI\nwidth",
                   ncol = 2, size = .05, border = "gray50") +
-      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth")
+      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"), 
+                             name = "90% CI\nwidth",
+                              labels = LABELS)
     
-    
-    
-    
-    thre1=tab2[tab2$ID==indicator,]$previous_est
-    thre2=tab2[tab2$ID==indicator,]$current_est
-    old$admin2_post= old$admin2_post*100
-    new$admin2_post= new$admin2_post*100
+    rng <- range(outadm2$oddratio, na.rm = TRUE)
+    g2 <- mapPlot(data = outadm2, geo = poly.adm2,
+                  by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
+                  variable = "version", value = "oddratio",
+                  ncol = 2, size = .05, border = "gray50")  +
+      scale_fill_distiller(
+        palette = "Spectral",
+        # values = scales::rescale(c(rng[1], 0, rng[2])),
+        values = scales::rescale(c(rng[1], 1, rng[2])),
+        
+        name    = "Odds ratio"
+      )
+
     
     g5 <- exceedPlot1(
       x = list(old,  new),
-      facet_labels = c(
-        paste0(yr1, " National: ", thre1, "%"),
-        paste0(yr2," National: " ,  thre2, "%")
-      ),
+      facet_labels = facet_labels,
       threshold = c(thre1, thre2),
       exceed = TRUE, direction = infolist[infolist$ID == indicator, ]$direction ,
       geo = poly.adm2, by.geo = "admin2.name.full",
@@ -810,8 +844,9 @@ for (indicator in indicatorlist ) {
     ) +
       scale_fill_distiller(name = "Exceedance\nProbability",
                            palette = "Spectral", direction = infolist[infolist$ID == indicator, ]$direction,
-                           limits = c(0,1), breaks = c(0.25,0.5,0.75))
-    
+                           limits = c(0,1), breaks = c(0.25,0.5,0.75),
+                           labels = scales::percent_format(accuracy = 1))
+ 
     
     
     
@@ -821,19 +856,18 @@ for (indicator in indicatorlist ) {
     
     # ----- at least one year missing -----
     # ----- compute metrics only when present -----
-    
-    
-    
     # Prevalence
     g1_left <- if (ok11) {
       plot_one_year(out1, yr1, "Prevalence", "Prevalence",
-                    scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence"))
+                    scale_fill_gradientn_prevalence)
+                    # scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence",labels = LABELS))
     } else {
       make_placeholder(yr1, "Prevalence")
     }
     g1_right <- if (ok12) {
       plot_one_year(out11, yr2, "Prevalence", "Prevalence",
-                    scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence"))
+                    scale_fill_gradientn_prevalence)
+                    # scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence",labels = LABELS))
     } else {
       make_placeholder(yr2, "Prevalence")
     }
@@ -843,31 +877,26 @@ for (indicator in indicatorlist ) {
     # 90% CI width
     g4_left <- if (ok11) {
       plot_one_year(out1, yr1, "width", "90% CI\nwidth",
-                    scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth"))
+                    scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth",labels = LABELS))
     } else {
       make_placeholder(yr1, "90% CI width")
     }
     g4_right <- if (ok12) {
       plot_one_year(out11, yr2, "width", "90% CI\nwidth",
-                    scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth"))
+                    scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth",labels = LABELS))
     } else {
       make_placeholder(yr2, "90% CI width")
     }
     g4 <- g4_left | g4_right
-    
-    
-    
+ 
     # Exceedance
     g5_left <- if (ok11) {
       
       
-      thre1=tab2[tab2$ID==indicator,]$previous_est
+      # thre1=tab2[tab2$ID==indicator,]$previous_est
       # thre2=tab2[tab2$ID==indicator,]$current_est
-      old$admin2_post=old$admin2_post*100
-      # res_adm12$admin1_post=res_adm12$admin1_post*100
-      
-      
-      legend <- paste0("Probability\nExceeding ", thre1, "%\n")
+      # old$admin2_post=old$admin2_post*100
+      # exceedlegend_singleyear <- paste0("Probability\nExceeding ", thre1, "%\n")
       exceedplot3(
         old,
         threshold = thre1,
@@ -879,8 +908,9 @@ for (indicator in indicatorlist ) {
         border = "gray80",
         size = 0
       )+
-        scale_fill_distiller(legend, palette = "Spectral",
-                             direction =  infolist[infolist$ID == indicator, ]$direction     )
+        scale_fill_distiller(exceedlegend_singleyear1, palette = "Spectral",
+                             direction =  infolist[infolist$ID == indicator, ]$direction ,
+                             , labels = scales::percent_format(accuracy = 1))
       
       
     } else {
@@ -888,12 +918,12 @@ for (indicator in indicatorlist ) {
     }
     g5_right <- if (ok12) {
       
-      # thre1=tab2[tab2$ID==indicator,]$previous_est
-      thre2=tab2[tab2$ID==indicator,]$current_est
-      # res_adm11$admin1_post=res_adm11$admin1_post*100
-      new$admin2_post=new$admin2_post*100
-      # names(new$res.admin2)[names(new$res.admin2) == value_col] <- yr2
-      
+      # # thre1=tab2[tab2$ID==indicator,]$previous_est
+      # thre2=tab2[tab2$ID==indicator,]$current_est
+      # # res_adm11$admin1_post=res_adm11$admin1_post*100
+      # new$admin2_post=new$admin2_post*100
+      # # names(new$res.admin2)[names(new$res.admin2) == value_col] <- yr2
+      # 
       legend <- paste0("Probability\nExceeding ", thre2, "%\n")
  
       exceedplot3(
@@ -907,8 +937,9 @@ for (indicator in indicatorlist ) {
         border = "gray80",
         size = 0
       )+
-        scale_fill_distiller(legend, palette = "Spectral",
-                             direction =  infolist[infolist$ID == indicator, ]$direction     )
+        scale_fill_distiller(exceedlegend_singleyear2, palette = "Spectral",
+                             direction =  infolist[infolist$ID == indicator, ]$direction,
+                             , labels = scales::percent_format(accuracy = 1))
       
     } else {
       make_placeholder(yr2, "Exceedance")
@@ -922,16 +953,18 @@ for (indicator in indicatorlist ) {
   
   final_plot <- (g1 / g4/ g5) + plot_layout(heights = c(1,1,1))
   
-  
-  
-  
   # stack the four rows
   
   ggsave(final_plot,
          filename = file.path(plot_path_c, paste0("ad2_map_", indicator, ".png")),
-         width = 6, height = 9, dpi = 300)
+         width = 6, height = 9, dpi = dpi)
 
-  
+  # 
+  # final_plot_t <- (g1 / g4/ g5 /g2) + plot_layout(heights = c(1,1,1,1))
+  # # 
+  # ggsave(final_plot_t,
+  #        filename = file.path(plot_path_c, paste0("rate_test_ad2_map_", indicator, ".png")),
+  #        width = 6, height = 9, dpi = dpi)
 }
 
 
@@ -950,6 +983,44 @@ for (indicator in indicatorlist ) {
   }
 
   
+  if(indicator %in% c("CM_ECMR_C_NNF")){
+    
+    thre1 = tab2[tab2$ID==indicator, ]$previous_est 
+    thre2 = tab2[tab2$ID==indicator, ]$current_est  
+    
+    LABELS = function(x) x * 1000
+    scale_fill_gradientn_prevalence<-scale_fill_gradientn(colors = color.paletteHERE, name = "Rate",labels = LABELS)
+    
+    facet_labels = c(
+      paste0(yr1, " National: ", thre1* 1000, " per 1,000"),
+      paste0(yr2, " National: ", thre2* 1000, " per 1,000")
+    )
+    exceedlegend_singleyear1 <- paste0("Probability\nExceeding ", thre1*1000)
+    exceedlegend_singleyear2 <- paste0("Probability\nExceeding ", thre2*1000)
+    
+    title_prev<-"Rate (per 1,000)"
+  } else {
+    
+    thre1 = tab2[tab2$ID==indicator, ]$previous_est 
+    thre2 = tab2[tab2$ID==indicator, ]$current_est  
+    
+    LABELS = scales::percent_format(accuracy = 1)
+    scale_fill_gradientn_prevalence<-scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence",labels = LABELS)
+    
+    facet_labels = c(
+      paste0(yr1, " National: ", thre1* 100, "%"),
+      paste0(yr2, " National: ", thre2* 100, "%")
+    )
+    
+    exceedlegend_singleyear1 <- paste0("Probability\nExceeding ", thre1*100, "%\n")
+    exceedlegend_singleyear2 <- paste0("Probability\nExceeding ", thre2*100, "%\n")
+    
+    title_prev<-"Prevalence (%)"
+  }
+  
+  
+  
+  
   res_adm11=res_adm12=c()
   
   yr1=min(surveys[surveys$country==country,]$year)
@@ -965,8 +1036,6 @@ for (indicator in indicatorlist ) {
   res_adm11 <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("tryCatched: Failed to read ", qfile_adm1, ": ", e$message); return("failed") })
   res_adm12 <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("tryCatched:Failed to read ", qfile_adm2, ": ", e$message); return("failed") })
 
-  # res_adm11 <- ad1_store[[iso3]][[as.character(yr1)]][[indicator]]
-  # res_adm12 <- ad1_store[[iso3]][[as.character(yr2)]][[indicator]]
 
   
   
@@ -1001,72 +1070,29 @@ for (indicator in indicatorlist ) {
     mp
   }
   
-  
-  
-  
+
   out1=out11=c()
   if (ok11) {
-    # res_adm11$res.admin1$cv2 <- with(res_adm11$res.admin1,
-    #                                  pmax(direct.se / direct.est, direct.se / (1 - direct.est))
-    # )
-    # res_adm11$admin1_post= redrawsample(res_adm11,nsim=1000)
-    # 
-    # res_adm11$res.admin1$cv2 <-  with(res_adm11$res.admin1,
-    #                                   direct.se / (direct.est * (1 - direct.est)))
-    # 
-    
-    # 
-    # qs11 <- apply(res_adm11$admin1_post, 2, quantile,
-    #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-    # res_adm11$res.admin1$direct.lower <- qs11[1, ]
-    # res_adm11$res.admin1$direct.upper <- qs11[2, ]
-    # 
+
     out1 <- res_adm11$res.admin1[, c("admin1.name", "direct.est", "direct.se",
                                       "direct.lower", "direct.upper")]
     colnames(out1)[c(2, 3, 4, 5)] <- c("Prevalence", "sd", "lower", "upper")
     out1$version <- yr1
-
-    out1$Prevalence= out1$Prevalence*100
-    out1$upper= out1$upper*100
-    out1$lower= out1$lower*100
     out1$width <- out1$upper - out1$lower
+    out1$oddratio<-( (out1$Prevalence/(1-out1$Prevalence)) / ( thre1/ (1-thre1)))
+    
   }
   
   if (ok12) {
-    # res_adm12$res.admin1$cv2 <- with(res_adm12$res.admin1,
-    #                                  pmax(direct.se / direct.est, direct.se / (1 - direct.est))
-    # )
-    # res_adm12$admin1_post= redrawsample(res_adm12,nsim=1000)
-    # 
-    # res_adm12$res.admin1$cv2 <-  with(res_adm12$res.admin1,
-    #                                   direct.se / (direct.est * (1 - direct.est)))
-    # 
-    # 
-    # qs12 <- apply(res_adm12$admin1_post, 2, quantile,
-    #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-    # res_adm12$res.admin1$direct.lower <- qs12[1, ]
-    # res_adm12$res.admin1$direct.upper <- qs12[2, ]
-    
-    # out11 <- res_adm12$res.admin1[, c("admin1.name", "direct.est", "direct.se",
-    #                                    "direct.lower", "direct.upper", "cv2")]
-    # colnames(out11)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-    # out11$version <- yr2
-    # out11$width <- out11$upper - out11$lower
-    # 
-    # out11$Prevalence= out11$Prevalence*100
-    # out11$upper= out11$upper*100
-    # out11$lower= out11$lower*100
-    # 
-    
+
     out11 <- res_adm12$res.admin1[, c("admin1.name", "direct.est", "direct.se",
                                      "direct.lower", "direct.upper")]
     colnames(out11)[c(2, 3, 4, 5)] <- c("Prevalence", "sd", "lower", "upper")
     out11$version <- yr2
-    
-    out11$Prevalence= out11$Prevalence*100
-    out11$upper= out11$upper*100
-    out11$lower= out11$lower*100
+  
     out11$width <- out11$upper - out11$lower
+    out11$oddratio<- ( (out11$Prevalence/(1-out11$Prevalence)) / ( thre2/ (1-thre2)))
+    
   }
   
   
@@ -1079,67 +1105,44 @@ for (indicator in indicatorlist ) {
     # ----- both years available -----
     outadm2 <- rbind(out1, out11)
     outadm2$version <- factor(outadm2$version, levels = unique(outadm2$version))
-    # outadm2$Prevalence= outadm2$Prevalence*100
-    # outadm2$upper= outadm2$upper*100
-    # outadm2$lower= outadm2$lower*100
-    
     outadm2$width <- outadm2$upper - outadm2$lower
-    g1 <- mapPlot(data = outadm2, geo = poly.adm1,
+   
+    # poly.adm1 <- poly.adm1 %>%
+    #   dplyr::left_join(outadm2, by = c("NAME_1" = "admin1.name"))
+    # hatching.gadm <- poly.adm1 %>%
+    #   subset(is.na(width) )
+
+    
+     g1 <- mapPlot(data = outadm2, geo = poly.adm1,
                   by.data = "admin1.name",  by.geo = "NAME_1", is.long = TRUE,
-                  variable = "version", value = "Prevalence", legend.label = "Prevalence",
-                  direction = -1, ncol = 2, size = .05, border = "gray50") +
-      scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence")
-    # theme_bw() +
-    # theme(
-    #   panel.grid = element_blank(),                 # no grid lines
-    #   # panel.border = element_rect(color = "black", fill = NA, size = 1), # black frame
-    #   strip.background = element_blank(),           # no grey facet bar
-    #   strip.text = element_text(size = 12), # year title on top
-    #   axis.text = element_blank(),                  # remove lat/lon text
-    #   axis.ticks = element_blank(),                 # remove ticks
-    #   axis.title = element_blank(),                 # remove axis titles
-    #   legend.position = "right"
-    # )
-    
-    # g2 <- mapPlot(data = outadm2, geo = poly.adm1,
-    #               by.data = "admin1.name",  by.geo = "NAME_1", is.long = TRUE,
-    #               variable = "version", value = "sd", legend.label = "sd",
-    #               ncol = 2, size = .05, border = "gray50") +
-    #   scale_fill_viridis_c("sd", option = "F", direction = -1)
-    
-    
+                  variable = "version", value = "Prevalence", legend.label = "",
+                  direction = -1, ncol = 2, size =0.05, border = "gray50") + #, size = .05, border = "gray50"
+       scale_fill_gradientn_prevalence
+ 
+
     g4 <- mapPlot(data = outadm2, geo = poly.adm1,
                   by.data = "admin1.name",  by.geo = "NAME_1", is.long = TRUE,
                   variable = "version", value = "width", legend.label = "90% CI\nwidth",
                   ncol = 2, size = .05, border = "gray50") +
-      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth")
-    # scale_fill_viridis_c("90% CI\nwidth", option = "B", direction = -1)+
-    # theme_bw() +
-    # theme(
-    #   panel.grid = element_blank(),                 # no grid lines
-    #   # panel.border = element_rect(color = "black", fill = NA, size = 1), # black frame
-    #   strip.background = element_blank(),           # no grey facet bar
-    #   strip.text = element_text(size = 12), # year title on top
-    #   axis.text = element_blank(),                  # remove lat/lon text
-    #   axis.ticks = element_blank(),                 # remove ticks
-    #   axis.title = element_blank(),                 # remove axis titles
-    #   legend.position = "right"
-    # )
+      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth",labels = LABELS)
+
     
     
+    rng <- range(outadm2$oddratio, na.rm = TRUE)
+    g23 <- mapPlot(data = outadm2, geo = poly.adm1,
+                  by.data = "admin1.name",  by.geo = "NAME_1", is.long = TRUE,
+                  variable = "version", value = "oddratio",
+                  ncol = 2, size = .05, border = "gray50"
+                  )+     scale_fill_distiller(
+        palette = "Spectral",
+        values = scales::rescale(c(rng[1], 1, rng[2])),
+        name    = "Odds ratio"
+      )
     
-    
-    thre1=tab2[tab2$ID==indicator,]$previous_est
-    thre2=tab2[tab2$ID==indicator,]$current_est
-    res_adm11$admin1_post=res_adm11$admin1_post*100
-    res_adm12$admin1_post=res_adm12$admin1_post*100
-    
+
     g5 <- exceedPlot1(
       x = list(res_adm11,  res_adm12),
-      facet_labels = c(
-        paste0(yr1, " National: ", thre1, "%"),
-        paste0(yr2," National: " ,  thre2, "%")
-      ),
+      facet_labels = facet_labels,
       threshold = c(thre1, thre2),
       exceed = TRUE, direction = infolist[infolist$ID == indicator, ]$direction ,
       geo = poly.adm1, by.geo = "NAME_1",
@@ -1148,12 +1151,9 @@ for (indicator in indicatorlist ) {
     ) +
       scale_fill_distiller(name = "Exceedance\nProbability",
                            palette = "Spectral", direction = infolist[infolist$ID == indicator, ]$direction ,
-                           limits = c(0,1), breaks = c(0.25,0.5,0.75))
-    
-    
-    
-    
-    
+                           limits = c(0,1), breaks = c(0.25,0.5,0.75),
+                           labels = scales::percent_format(accuracy = 1) 
+                           )
     
   } else {
     # ----- at least one year missing -----
@@ -1164,13 +1164,13 @@ for (indicator in indicatorlist ) {
     # Prevalence
     g1_left <- if (ok11) {
       plot_one_year(out1, yr1, "Prevalence", "Prevalence",
-                    scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence"))
+                    scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence", labels=LABELS))
     } else {
       make_placeholder(yr1, "Prevalence")
     }
     g1_right <- if (ok12) {
       plot_one_year(out11, yr2, "Prevalence", "Prevalence",
-                    scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence"))
+                    scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence", labels=LABELS))
     } else {
       make_placeholder(yr2, "Prevalence")
     }
@@ -1181,14 +1181,14 @@ for (indicator in indicatorlist ) {
     # 90% CI width
     g4_left <- if (ok11) {
       plot_one_year(out1, yr1, "width", "90% CI\nwidth",
-                    scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth"))
+                    scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth", labels=LABELS))
       
     } else {
       make_placeholder(yr1, "90% CI width")
     }
     g4_right <- if (ok12) {
       plot_one_year(out11, yr2, "width", "90% CI\nwidth",
-                    scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth"))
+                    scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth", labels=LABELS))
     } else {
       make_placeholder(yr2, "90% CI width")
     }
@@ -1198,23 +1198,7 @@ for (indicator in indicatorlist ) {
     # Exceedance
     g5_left <- if (ok11) {
       
-      
-      thre1=tab2[tab2$ID==indicator,]$previous_est
-      # thre2=tab2[tab2$ID==indicator,]$current_est
-      res_adm11$admin1_post=res_adm11$admin1_post*100
-      # res_adm12$admin1_post=res_adm12$admin1_post*100
-      
-      
-      legend <- paste0("Probability\nExceeding ", thre1, "%\n")
-      # exceedplot2(res_adm11, threshold = thre1,
-      #            exceed = TRUE,
-      #            # value_col = as.character(yr1),
-      #            border = "gray80", size = 0,
-      #            geo = poly.adm1, by.geo = "NAME_1", ylim = c(0, 1)) +
-      #   scale_fill_distiller(legend, palette = "Spectral",
-      #                        direction =  infolist[infolist$ID == indicator, ]$direction     )
-      # 
-      # 
+
       
       exceedplot3(
         res_adm11,
@@ -1227,8 +1211,9 @@ for (indicator in indicatorlist ) {
         border = "gray80",
         size = 0
       )+
-        scale_fill_distiller(legend, palette = "Spectral",
-                             direction =  infolist[infolist$ID == indicator, ]$direction     )
+        scale_fill_distiller(exceedlegend_singleyear1, palette = "Spectral",
+                             direction =  infolist[infolist$ID == indicator, ]$direction,
+                             labels = scales::percent_format(accuracy = 1) )
       
       
       
@@ -1239,13 +1224,7 @@ for (indicator in indicatorlist ) {
     }
     g5_right <- if (ok12) {
       
-      # thre1=tab2[tab2$ID==indicator,]$previous_est
-      thre2=tab2[tab2$ID==indicator,]$current_est
-      # res_adm11$admin1_post=res_adm11$admin1_post*100
-      res_adm12$admin1_post=res_adm12$admin1_post*100
-      
-      legend <- paste0("Probability\nExceeding ", thre2, "%\n")
-
+   
       
       exceedplot3(
         res_adm12,
@@ -1257,8 +1236,9 @@ for (indicator in indicatorlist ) {
         by.geo = "NAME_1",
         border = "gray80",
         size = 0
-      )+scale_fill_distiller(legend, palette = "Spectral",
-                             direction =  infolist[infolist$ID == indicator, ]$direction     )
+      )+scale_fill_distiller(exceedlegend_singleyear2, palette = "Spectral",
+                             direction =  infolist[infolist$ID == indicator, ]$direction,
+                             labels = scales::percent_format(accuracy = 1) )
       
       
     } else {
@@ -1273,7 +1253,8 @@ for (indicator in indicatorlist ) {
   
   
   
-  
+  # final_plot_t <- (g1/ g4/ g5/ g23) + plot_layout(heights = c(1,1,1,1))
+  # 
   
   final_plot <- (g1/ g4/ g5) + plot_layout(heights = c(1,1,1))
   
@@ -1292,36 +1273,47 @@ for (indicator in indicatorlist ) {
   
   ggsave(final_plot,
          filename = file.path(plot_path_c, paste0("ad1_map_", indicator, ".png")),
-         width = 6, height = 9, dpi = 300)
+         width = 6, height = 9, dpi = dpi)
   
+  # 
+  # ggsave(final_plot_t,
+  #        filename = file.path(plot_path_c, paste0("rate_test_ad1_map_", indicator, ".png")),
+  #        width = 6, height = 9, dpi = dpi)
+  # ggsave(  g2,
+  #        filename = file.path(plot_path_c, paste0("odd_r_map_2", indicator, ".png")),
+  #        width = 6, height = 3, dpi = 300)
+  # ggsave(  g23,
+  #          filename = file.path(plot_path_c, paste0("odd_r_map_1", indicator, ".png")),
+  #          width = 6, height = 3, dpi = 300)
+  # # 
   
-  
-  
+
+  # 
+  # 
   # --------------------
   # 
   # ----- ridge.   -----
   # 
   # --------------------
-  
+
   if (ok11 && ok12) {
     
     
     
     if (infolist[infolist$ID == indicator, ]$direction == -1) {
-      color.paletteHERE <- (brewer.pal(5, "RdYlGn"))
-      colours =  rev(RColorBrewer::brewer.pal(9, "Blues"))
+      color.paletteHERE <- rev(brewer.pal(5, "RdYlGn"))
+      colours =  RColorBrewer::brewer.pal(9, "Blues")
     } else {
-      color.paletteHERE <- brewer.pal(5, "RdYlGn")
-      colours =  rev(RColorBrewer::brewer.pal(9, "Blues"))
+      color.paletteHERE <- (brewer.pal(5, "RdYlGn"))
+      colours =  RColorBrewer::brewer.pal(9, "Blues")
       
     }
-    
-    
+
     
     # low_col  <- color.paletteHERE[1]
     # high_col <- color.paletteHERE[5]
-    low_col  <- colours[1]
-    high_col <- colours[5]
+    low_col  <- colours[5]
+    high_col <- colours[1]
     
     res_adm11$admin1_post= res_adm12$admin1_post-res_adm11$admin1_post
     
@@ -1330,18 +1322,24 @@ for (indicator in indicatorlist ) {
     )+
       theme_bw() +
       theme(legend.position = "top",
-            legend.title = element_blank(),
+            # legend.title = element_blank(),
             axis.text.y  = element_text(size = 14)
-      )+
-      
-      scale_fill_gradientn( colours = color.paletteHERE)
+      )+ 
+      scale_fill_gradientn( 
+        name    = title_prev,
+        colours = color.paletteHERE,
+                            labels  = LABELS) +
+      scale_x_continuous(
+       labels = LABELS
+     )
+     
+    
     
     my_order <- levels(v1$data$region.name)
     
     
     v2<- ridgePlot1(res_adm11,  by.year = TRUE,
                     palette = color.paletteHERE,
-                    
                     custom.order = my_order
                     
     )+
@@ -1351,18 +1349,20 @@ for (indicator in indicatorlist ) {
                  linewidth = 0.6)+
       theme_bw() +
       theme(legend.position = "top",
-            legend.title = element_blank(),
+            # legend.title = element_blank(),
             axis.text.y  = element_text(size = 14)
       )+
-      # scale_fill_gradient2(
-      #   low = low_col, mid = "white", high = high_col,
-      #   midpoint = 0
-      # )
       scale_fill_gradientn(
-        colours = colours
-        # limits = c(min(df$value, na.rm = TRUE),
-        #            max(df$value, na.rm = TRUE))
+        name    = "Change",
+        colours = colours,
+        labels  = LABELS
+      )+ 
+      scale_x_continuous(
+        labels = LABELS
       )
+    
+    
+    
     g1= v1+v2
     
   } else {
@@ -1388,10 +1388,16 @@ for (indicator in indicatorlist ) {
       )+
         theme_bw() +
         theme(legend.position = "top",
-              legend.title = element_blank(),
+              # legend.title = element_blank(),
               axis.text.y  = element_text(size = 14)
-        )+
-        scale_fill_gradientn( colours = color.paletteHERE)
+        )+ 
+        scale_fill_gradientn( 
+          name    = title_prev,
+          colours = color.paletteHERE,
+                              labels  = LABELS) +
+        scale_x_continuous(
+          labels = LABELS
+        )
     } else {
       make_placeholder(yr1, "Prevalence")
     }
@@ -1400,10 +1406,16 @@ for (indicator in indicatorlist ) {
       )+
         theme_bw() +
         theme(legend.position = "top",
-              legend.title = element_blank(),
+              # legend.title = element_blank(),
               axis.text.y  = element_text(size = 14)
-        )+
-        scale_fill_gradientn( colours = color.paletteHERE)
+        )+ 
+        scale_fill_gradientn( 
+          name    = title_prev,
+          colours = color.paletteHERE,
+         labels  = LABELS) +
+        scale_x_continuous(
+          labels = LABELS
+        )
     } else {
       make_placeholder(yr2, "Prevalence")
     }
@@ -1416,12 +1428,15 @@ for (indicator in indicatorlist ) {
   
   ggsave(g1,
          filename = file.path(plot_path_c, paste0("ridge_", indicator, ".png")),
-         width = 15, height = 15, dpi = 300)
+         width = 15, height = 15, dpi = dpi)
   
   
   
   
 }
+
+
+
 
 }
 
@@ -1440,7 +1455,7 @@ savemaps_ridge(country="Nigeria",
 savemaps_ridge(country="Burkina Faso",
                ad2_name="new_FH_adm2_fix_nest-",
                ad1_name="new_res_adm1-",
-               indicatorlist ="CO_MOBB_W_MOB",
+               indicatorlist =indicator,
                adm_name = "new_res_adm0-",
                middle_path="Gates-results/Results",
                plot_path_c=file.path(source_path,"Gates-results/ReportPlots","Burkina Faso"))

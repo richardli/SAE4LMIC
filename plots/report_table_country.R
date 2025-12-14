@@ -55,12 +55,9 @@ ad2_name_fix=  "new_res_adm2_fix-"
 countrylist=unique(surveys$country)
 
 
-countrylist= c(
-  "Rwanda"  ,
-  "Mali"
-)
 
-for (country in countrylist){ 
+
+for (country in countrylist[-2]){ 
   plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country)
   # 
   save_tab1(
@@ -71,23 +68,23 @@ for (country in countrylist){
     out_middle=out_middle
   )
 
-  save_tab3(
-    country    = country,
-    ad2_name_dir = ad2_name_dir,
-    ad2_name_fix=ad2_name_fix,
-    ids=infolist$ID,
-    middle_path=middle_path,
-    out_middle=out_middle
-  )
-  
-  save_tab456(
-    country   = country,
-    adm_name=adm_name,
-    ids=infolist$ID,
-    middle_path=middle_path,
-    out_middle=out_middle
-  )
-  print( "table done ")
+  # save_tab3(
+  #   country    = country,
+  #   ad2_name_dir = ad2_name_dir,
+  #   ad2_name_fix=ad2_name_fix,
+  #   ids=infolist$ID,
+  #   middle_path=middle_path,
+  #   out_middle=out_middle
+  # )
+  # 
+  # save_tab456(
+  #   country   = country,
+  #   adm_name=adm_name,
+  #   ids=infolist$ID,
+  #   middle_path=middle_path,
+  #   out_middle=out_middle
+  # )
+  # print( "table done ")
 
   
   

@@ -298,7 +298,8 @@ saveinterval_overlay<-function(
     ad2_name="new_FH_adm2_fix_nest-",
     indicatorlist =infolist$ID,
     middle_path="Gates-results/Results",
-    plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country)
+    plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country),
+    dpi=150
     ){
     
 
@@ -322,7 +323,29 @@ for(country in country){
     
     
     
+     type="percentage"
+    if( indicator %in% c("CM_ECMR_C_NNF")){type="per1000"}
     
+    
+    # --- Titles depend on scale type ---
+    if (type == "probability") {
+      factorr=1
+      title_prev  <- "Prevalence"
+    } else if (type == "percentage") {
+  
+      title_prev  <- "Prevalence (%)"
+      LABELS=scales::label_percent(scale = 100)
+      factorr=100
+      labels_overley= scales::label_number(suffix = "%")
+
+    } else { # per1000
+     
+      title_prev  <- "Rate (per 1,000)"
+      LABELS=scales::label_number(scale = 1000, accuracy = 1)
+      factorr=1000
+      labels_overley= scales::label_number(scale = 1)
+      
+    }
     
     
     yr1=min(surveys[surveys$country==country,]$year)
@@ -356,135 +379,14 @@ for(country in country){
     # res_adm12 <- res_adm1_store[[country]][[indicator]][[as.character(yr2)]]
     ok11 <- has_data(res_adm11)
     ok12 <- has_data(res_adm12)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    out1=out11=c()
-    if (ok11) {
-      # 
-      # res_adm11$res.admin1$direct.est= res_adm11$res.admin1$direct.est
-      # 
-      # res_adm11$res.admin1$cv1 <- with(res_adm11$res.admin1,
-      #                                  pmax(direct.se / direct.est, direct.se / (1 - direct.est))
-      # )
-      # res_adm11$admin1_post= redrawsample(res_adm11,nsim=1000)
-      # 
-      # res_adm11$res.admin1$cv1 <-  with(res_adm11$res.admin1,
-      #                                   direct.se / (direct.est * (1 - direct.est)))
-      # 
-      # 
-      # 
-      # qs11 <- apply(res_adm11$admin1_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # res_adm11$res.admin1$direct.lower <- qs11[1, ]
-      # res_adm11$res.admin1$direct.upper <- qs11[2, ]
-      
-      out1 <- res_adm11$res.admin1[, c("admin1.name", "direct.est", "direct.se",
-                                       "direct.lower", "direct.upper")]
-      colnames(out1)[c(2, 3, 4,5)] <- c("Prevalence", "sd","lower", "upper")
-      out1$version <- yr1
-      out1$Prevalence= out1$Prevalence*100
-      out1$upper= out1$upper*100
-      out1$lower= out1$lower*100
-      out1$width <- out1$upper - out1$lower
-      
-    }
-    if (ok12) {
-# 
-#       res_adm12$admin1_post= redrawsample(res_adm12,nsim=1000)
-#       
-#       res_adm12$res.admin1$cv1 <-  with(res_adm12$res.admin1,
-#                                         direct.se / (direct.est * (1 - direct.est)))
-#       
-# #       
-#       qs12 <- apply(res_adm12$admin1_post, 2, quantile,
-#                     probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # res_adm12$res.admin1$direct.lower <- qs12[1, ]
-      # res_adm12$res.admin1$direct.upper <- qs12[2, ]
-      
-      out11 <- res_adm12$res.admin1[, c("admin1.name", "direct.est", "direct.se",
-                                         "direct.lower", "direct.upper")]
-      colnames(out11)[c(2, 3, 4, 5)] <- c("Prevalence", "sd", "lower", "upper")
-      out11$version <- yr2
-      
-      out11$Prevalence= out11$Prevalence*100
-      out11$upper= out11$upper*100
-      out11$lower= out11$lower*100
-      out11$width <- out11$upper - out11$lower
-      
-    }
-    
-    
-    
-    
-    ok21 <- has_data(old)
-    ok22 <- has_data(new)
-    out2=out22=c()
-    if (ok21) {
-      # 
-      # old$res.admin2$cv1 <-  with(old$res.admin2,
-      #                             sd / (mean * (1 - mean)))
-      # 
-      # 
-      # 
-      # qs11 <- apply(old$admin2_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # old$res.admin2$lower <- qs11[1, ]
-      # old$res.admin2$upper <- qs11[2, ]
-      
-      out2 <- old$res.admin2[, c("admin2.name.full", "mean", "sd",
-                                "lower", "upper")]
-      colnames(out2)[c(2, 3, 4,5)] <- c("Prevalence", "sd","lower", "upper")
-      out2$version <- yr1
-      out2$Prevalence= out2$Prevalence*100
-      out2$upper= out2$upper*100
-      out2$lower= out2$lower*100
-      out2$width <- out2$upper - out2$lower
-      
-    }
-    if (ok22) {
-      # new$res.admin2$cv1 <- with(new$res.admin2,
-      #                                  pmax(sd / mean, sd / (1 - mean))
-      # )
-      # new$res.admin2$cv1 <-  with(new$res.admin2,
-      #                             sd / (mean * (1 - mean)))
-      # 
-      # 
-      # qs12 <- apply(new$admin2_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # new$res.admin2$lower <- qs12[1, ]
-      # new$res.admin2$upper <- qs12[2, ]
-      # 
-      out22 <- new$res.admin2[, c("admin2.name.full", "mean", "sd",
-                                   "lower", "upper")]
-      colnames(out22)[c(2)] <- c("Prevalence")
-      out22$version <- yr2
-      out22$Prevalence= out22$Prevalence*100
-      out22$upper= out22$upper*100
-      out22$lower= out22$lower*100
-      out22$width <- out22$upper - out22$lower
-      
-    }
-    
-    
-    
+
+ 
     # --------------------
     # 
     # ----- interval -----
     # 
     # --------------------
-    
-    
-    
-    
+     
     if (ok11 && ok12  && ok21 && ok22 ) {
       # ----- both years available -----
       
@@ -503,7 +405,9 @@ for(country in country){
             legend.position = "bottom",
             axis.title.x = element_blank(),
             axis.title.y = element_blank()
-          )
+          )+ scale_y_continuous(labels = LABELS) +
+        labs(color = title_prev)
+        
       }else{
         p <- intervalplot1(admin = 2,
                            compare = TRUE,
@@ -520,7 +424,8 @@ for(country in country){
             legend.position = "bottom",
             axis.title.x = element_blank(),
             axis.title.y = element_blank()
-          ) +  scale_y_continuous(labels = scales::label_number(scale = 100))
+          ) +  scale_y_continuous(labels = LABELS) +
+          labs(color = title_prev)
         
       }
       
@@ -537,7 +442,8 @@ for(country in country){
           legend.position = "bottom",
           axis.title.x = element_blank(),
           axis.title.y = element_blank()
-        )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+        )+  scale_y_continuous(labels = LABELS )+
+        labs(color = title_prev)
       
       
       
@@ -565,7 +471,8 @@ for(country in country){
               legend.position = "bottom",
               axis.title.x = element_blank(),
               axis.title.y = element_blank()
-            )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+            )+  scale_y_continuous(labels = LABELS)+
+            labs(color = title_prev)
         }else{
           intevalplot1(admin = 2,
                        compare = TRUE,
@@ -580,7 +487,8 @@ for(country in country){
               legend.position = "bottom",
               axis.title.x = element_blank(),
               axis.title.y = element_blank()
-            )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+            )+  scale_y_continuous(labels = LABELS)+
+            labs(color = title_prev)
         }
         
         
@@ -600,7 +508,8 @@ for(country in country){
               legend.position = "bottom",
               axis.title.x = element_blank(),
               axis.title.y = element_blank()
-            )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+            )+  scale_y_continuous(labels =LABELS)+
+            labs(color = title_prev)
         }else{
           intevalplot1(admin = 2,
                        compare = TRUE,
@@ -616,7 +525,8 @@ for(country in country){
               legend.position = "bottom",
               axis.title.x = element_blank(),
               axis.title.y = element_blank()
-            )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+            )+  scale_y_continuous(labels =LABELS)+
+            labs(color = title_prev)
         }
         
       }else{
@@ -628,11 +538,8 @@ for(country in country){
       
       
       
-      # Prevalence
+      # Prevalence admin 1 
       p1<- if (ok11) {
-        
-        
-        
         
         intervalPlot(admin = 1, compare = TRUE, model = list(
           "Baseline"= res_adm11
@@ -644,13 +551,12 @@ for(country in country){
             legend.position = "bottom",
             axis.title.x = element_blank(),
             axis.title.y = element_blank()
-          )    +  scale_y_continuous(labels = scales::label_number(scale = 100))
+          )    +  scale_y_continuous(labels = LABELS)+
+          labs(color = title_prev)
         
       } else if(ok12) {
         intervalPlot(admin = 1, compare = TRUE, model = list(
-          
           "Latest"= res_adm12
-          
         ), sort_by = "Latest")+
           theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1))+
           guides(shape = guide_legend(override.aes = list(size = 2))) +   # legend size
@@ -658,7 +564,8 @@ for(country in country){
             legend.position = "bottom",
             axis.title.x = element_blank(),
             axis.title.y = element_blank()
-          ) +  scale_y_continuous(labels = scales::label_number(scale = 100)) 
+          ) +  scale_y_continuous(labels = LABELS)+
+          labs(color = title_prev) 
         }else{
       make_placeholder("interval", "interval")
       
@@ -667,12 +574,12 @@ for(country in country){
     ggsave(p ,
            filename = file.path(plot_path_c, paste0("interval-ad2-", indicator, ".png")),
            width = 15, height = 15,
-           dpi = 300)
+           dpi = dpi)
     
     ggsave(p1 ,
            filename = file.path(plot_path_c, paste0("interval-ad1-", indicator, ".png")),
            width = 15, height = 10,
-           dpi = 300)
+           dpi = dpi)
     
     
     
@@ -684,6 +591,57 @@ for(country in country){
     # ----- overlay ------
     # 
     # --------------------
+    
+    
+    out1=out11=c()
+    if (ok11) {
+      out1 <- res_adm11$res.admin1[, c("admin1.name", "direct.est", "direct.se",
+                                       "direct.lower", "direct.upper")]
+      colnames(out1)[c(2, 3, 4,5)] <- c("Prevalence", "sd","lower", "upper")
+      out1$version <- yr1
+      out1$Prevalence= out1$Prevalence*factorr
+      out1$upper= out1$upper*factorr
+      out1$lower= out1$lower*factorr
+      out1$width <- out1$upper - out1$lower
+      
+    }
+    if (ok12) {
+      out11 <- res_adm12$res.admin1[, c("admin1.name", "direct.est", "direct.se",
+                                        "direct.lower", "direct.upper")]
+      colnames(out11)[c(2, 3, 4, 5)] <- c("Prevalence", "sd", "lower", "upper")
+      out11$version <- yr2
+      
+      out11$Prevalence= out11$Prevalence*factorr
+      out11$upper= out11$upper*factorr
+      out11$lower= out11$lower*factorr
+      out11$width <- out11$upper - out11$lower
+      
+    }
+    
+    out2=out22=c()
+    if (ok21) {
+      
+      out2 <- old$res.admin2[, c("admin2.name.full", "median", "sd",
+                                 "lower", "upper")]
+      colnames(out2)[c(2, 3, 4,5)] <- c("Prevalence", "sd","lower", "upper")
+      out2$version <- yr1
+      out2$Prevalence= out2$Prevalence*factorr
+      out2$upper= out2$upper*factorr
+      out2$lower= out2$lower*factorr
+      out2$width <- out2$upper - out2$lower
+      
+    }
+    if (ok22) {
+      out22 <- new$res.admin2[, c("admin2.name.full", "median", "sd",
+                                  "lower", "upper")]
+      colnames(out22)[c(2)] <- c("Prevalence")
+      out22$version <- yr2
+      out22$Prevalence= out22$Prevalence*factorr
+      out22$upper= out22$upper*factorr
+      out22$lower= out22$lower*factorr
+      out22$width <- out22$upper - out22$lower
+      
+    }   
     
     if (ok11 && ok12  && ok21 && ok22 ) {
       # ----- both years available -----
@@ -716,14 +674,16 @@ for(country in country){
       Overlay=ggplot(out) +
         aes(x = Prevalence, y = reorder(admin1.name, mean_to_order, decreasing = FALSE), shape = admin, color = admin, alpha = admin, size = admin) +
         geom_point(alpha=0.7) +
-        scale_size_manual("Prevalence", values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
-        scale_alpha_manual("Prevalence", values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
-        scale_shape_manual("Prevalence", values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
-        scale_color_manual("Prevalence", values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
+        scale_size_manual(title_prev, values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
+        scale_alpha_manual(title_prev, values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
+        scale_shape_manual(title_prev, values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
+        scale_color_manual(title_prev, values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
         # scale_color_manual("version", values = c("firebrick1", "royalblue"), labels = c(yr1, yr2)) +
         facet_wrap(~version, ncol = 2) +
         theme_bw() + xlab("") + ylab("") +
-        theme(lengend.position = "bottom")
+        theme(lengend.position = "bottom")+
+        scale_x_continuous(labels = labels_overley)
+      
       # +
       # ggtitle(paste0(infolist[infolist$ID==indicator,]$Description))
       
@@ -738,7 +698,7 @@ for(country in country){
       
       
       # Prevalence
-      g1_left <- if (ok11&ok21) {
+      g1_left <- if  (ok11&ok21) {
         
         outadm2 <- rbind(out2)
         outadm2$version <- factor(outadm2$version, levels = unique(outadm2$version))
@@ -766,16 +726,12 @@ for(country in country){
         ggplot(out) +
           aes(x = Prevalence, y = reorder(admin1.name, mean_to_order, decreasing = FALSE), shape = admin, color = admin, alpha = admin, size = admin) +
           geom_point(alpha=0.7) +
-          scale_size_manual("Prevalence", values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
-          scale_alpha_manual("Prevalence", values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
-          scale_shape_manual("Prevalence", values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
-          scale_color_manual("Prevalence", values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
-          # scale_color_manual("version", values = c("firebrick1", "royalblue"), labels = c(yr1, yr2)) +
-          
-          # facet_wrap(~version, ncol = 2) +
-          theme_bw() + xlab("") + ylab("") +
-          theme(lengend.position = "bottom")+
-          ggtitle(paste0(infolist[infolist$ID==indicator,]$Description))
+          scale_size_manual(title_prev, values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
+          scale_alpha_manual(title_prev, values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
+          scale_shape_manual(title_prev, values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
+          scale_color_manual(title_prev, values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
+          theme_bw() + xlab("") + ylab("")+
+          scale_x_continuous(labels = labels_overley)
         
         
       } else {
@@ -808,16 +764,13 @@ for(country in country){
         ggplot(out) +
           aes(x = Prevalence, y = reorder(admin1.name, mean_to_order, decreasing = FALSE), shape = admin, color = admin, alpha = admin, size = admin) +
           geom_point(alpha=0.7) +
-          scale_size_manual("Prevalence", values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
-          scale_alpha_manual("Prevalence", values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
-          scale_shape_manual("Prevalence", values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
-          scale_color_manual("Prevalence", values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
-          # scale_color_manual("version", values = c("firebrick1", "royalblue"), labels = c(yr1, yr2)) +
-          
-          # facet_wrap(~version, ncol = 2) +
-          theme_bw() + xlab("") + ylab("") +
-          theme(lengend.position = "bottom")+
-          ggtitle(paste0(infolist[infolist$ID==indicator,]$Description))
+          scale_size_manual( title_prev, values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
+          scale_alpha_manual(title_prev, values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
+          scale_shape_manual(title_prev, values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
+          scale_color_manual(title_prev, values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
+          theme_bw() + xlab("") + ylab("")+
+          scale_x_continuous(labels = labels_overley)
+        
         
       } else {
         make_placeholder(yr2, "overlay")
@@ -832,7 +785,7 @@ for(country in country){
     
     ggsave(Overlay,
            filename = file.path(plot_path_c, paste0("overlay-", indicator, ".png")),
-           width = 10, height = 6, dpi = 300)
+           width = 10, height = 6, dpi = dpi)
     
     
     
@@ -850,10 +803,10 @@ for(country in country){
  
  
   
- saveinterval_overlay(country="Nigeria",
+ saveinterval_overlay(country=country,
           ad2_name="new_FH_adm2_fix_nest-",
           ad1_name="new_res_adm1-",
-          indicatorlist =infolist$ID,
+          indicatorlist =infolist$ID[18],
           middle_path="Gates-results/Results",
           plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
  

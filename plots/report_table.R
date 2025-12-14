@@ -72,16 +72,16 @@ save_tab1 <- function(country,
   label_df <- dplyr::select(infolist, ID, Description)
   tab <- grid |>
     dplyr::left_join(label_df, by = c("indicator" = "ID")) |>
-    dplyr::mutate(
-      Indicator = dplyr::if_else(is.na(Description) | Description == "", indicator, Description),
+    dplyr::mutate( 
+      ID = indicator, #dplyr::if_else(is.na(Description) | Description == "", indicator, Description)
       value = ifelse(is.na(value), NA, round(100 * value, 1))  # percent with 1 decimal
     ) |>
-    dplyr::select(Indicator, year, value) |>
+    dplyr::select(ID, year, value) |>
     tidyr::pivot_wider(
       names_from = year, values_from = value,
       names_prefix = "DHS "
-    ) |>
-    dplyr::arrange(Indicator)
+    ) 
+
   print(tab)
   # write CSV
   out_dir <- file.path(source_path, out_middle, country)
@@ -97,7 +97,7 @@ save_tab1 <- function(country,
 
 
 save_tab1(
-  country     = "Nigeria",
+  country     = "Burkina Faso",
   adm_name<-"new_res_adm0-",
   ids=infolist$ID,
   middle_path="Gates-results/Results",

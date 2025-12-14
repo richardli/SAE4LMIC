@@ -58,311 +58,310 @@ scatterPlot1 <- function(res1, value1, res2, value2, label1, label2,
 }
 
 
-savescatter<-function(
-      country= "Nigeria",
-      ad2_name= "new_FH_adm2_fix_nest-",
-      ad2_name_dir=  "new_res_adm2_fix-",
-      middle_path="Gates-results/Results",
-      plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country),
-      indicatorlist =infolist$ID
-  ){
-  
-  
-  
-for (indicator in indicatorlist) {
-  
-  
 
+
+savescatter <- function(
+    country       = "Nigeria",
+    ad2_name      = "new_FH_adm2_fix_nest-",
+    ad2_name_dir  = "new_res_adm2_fix-",
+    middle_path   = "Gates-results/Results",
+    plot_path_c   = file.path(source_path, "Gates-results/ReportPlots", country),
+    indicatorlist = infolist$ID,
+    dpi           = 150
+) {
+
+  # Ensure output directory exists
+  if (!dir.exists(plot_path_c)) {
+    dir.create(plot_path_c, recursive = TRUE, showWarnings = FALSE)
+  }
   
-  yr1=min(surveys[surveys$country==country,]$year)
-  yr2=max(surveys[surveys$country==country,]$year)
+  # Years and paths (don’t recompute inside loop)
+  surv_cty <- surveys[surveys$country == country, ]
+  yr1 <- min(surv_cty$year)
+  yr2 <- max(surv_cty$year)
   
-  
-  res_adm11=res_adm12=old=old=new=c()
-  
-  yr1=min(surveys[surveys$country==country,]$year)
-  results_path_yr1 <- file.path(source_path, middle_path ,country, yr1)
-  
-  yr2=max(surveys[surveys$country==country,]$year)
+  results_path_yr1 <- file.path(source_path, middle_path, country, yr1)
   results_path_yr2 <- file.path(source_path, middle_path, country, yr2)
-  
+  read_qs_safe <- function(path) {
+    tryCatch(
+      qs::qread(path),
+      error = function(e) {
+        message("Failed to read ", path, ": ", e$message)
+        NULL
+      }
+    )
+  }
 
-  qfile_adm10 <- file.path(results_path_yr1, paste0(ad2_name, indicator, ".qs"))
-  qfile_adm20 <- file.path(results_path_yr2, paste0(ad2_name, indicator, ".qs"))
-  old <- tryCatch(qs::qread(qfile_adm10), error = function(e) { message("Failed to read ", qfile_adm10, ": ", e$message); return(NULL) })
-  new <- tryCatch(qs::qread(qfile_adm20), error = function(e) { message("Failed to read ", qfile_adm20, ": ", e$message); return(NULL) })
-  
+  for (indicator in indicatorlist) {
+    
+    type="percentage"
+    if( indicator %in% c("CM_ECMR_C_NNF")){type="per1000"}
+    
+    
+    # --- Titles depend on scale type ---
+    if (type == "probability") {
+      factorr=1
+      title_prev  <- "Prevalence"
+      title_width <- "90% CI width"
+    } else if (type == "percentage") {
+      factorr=100
+      title_prev  <- "Prevalence (%)"
+      title_width <- "90% CI width (%)"
+      labels_scatter<- scales::label_number(suffix = "%")
 
-  qfile_adm1 <- file.path(results_path_yr1, paste0(ad2_name_dir, indicator, ".qs"))
-  qfile_adm2 <- file.path(results_path_yr2, paste0(ad2_name_dir, indicator, ".qs"))
-  res_adm11 <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("Failed to read ", qfile_adm1, ": ", e$message); return(NULL) })
-  res_adm12 <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("Failed to read ", qfile_adm2, ": ", e$message); return(NULL) })
-  
-  
-  
-  
-  
-  # 
-  # old <- ad2_store[[country]][[indicator]][[as.character(yr1)]]
-  # new <- ad2_store[[country]][[indicator]][[as.character(yr2)]]
-  ok21 <- has_data(old)
-  ok22 <- has_data(new)
-  # res_adm11 <- ad2_store_direct[[country]][[indicator]][[as.character(yr1)]]
-  # res_adm12 <- ad2_store_direct[[country]][[indicator]][[as.character(yr2)]]
-  ok11 <- has_data(res_adm11)
-  ok12 <- has_data(res_adm12)
-  out1=out11=c()
-  if (ok11) {
+    } else { # per1000
+      factorr=1000
+      title_prev  <- "Rate (per 1,000)"
+      title_width <- "90% CI width (per 1,000)"
+      labels_scatter<- scales::label_number(scale = 1)
+    }
+    # axis labels are always just Smoothed / Unsmoothed
+    val_xlab   <- "Unsmoothed"
+    val_ylab   <- "Smoothed"
+    width_xlab <- "Unsmoothed"
+    width_ylab <- "Smoothed"
     
+    # ---- Load results ----
+    old       <- read_qs_safe(file.path(results_path_yr1, paste0(ad2_name,     indicator, ".qs")))
+    new       <- read_qs_safe(file.path(results_path_yr2, paste0(ad2_name,     indicator, ".qs")))
+    res_adm11 <- read_qs_safe(file.path(results_path_yr1, paste0(ad2_name_dir, indicator, ".qs")))
+    res_adm12 <- read_qs_safe(file.path(results_path_yr2, paste0(ad2_name_dir, indicator, ".qs")))
     
-    # res_adm11$res.admin2$cv1 <-  with(res_adm11$res.admin2,
-    #                             sd / (mean * (1 - mean)))
+    ok11 <- has_data(res_adm11)  # direct yr1
+    ok12 <- has_data(res_adm12)  # direct yr2
+    ok21 <- has_data(old)        # smoothed yr1
+    ok22 <- has_data(new)        # smoothed yr2
     
-    res_adm11$res.admin2$direct.est=res_adm11$res.admin2$direct.est*100
-    res_adm11$admin2_post=res_adm11$admin2_post*100
-    # qs11 <- apply(res_adm11$admin2_post, 2, quantile,
-    #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-    # res_adm11$res.admin2$lower <- qs11[1, ]
-    # res_adm11$res.admin2$upper <- qs11[2, ]
-    res_adm11$res.admin2$width <-  res_adm11$res.admin2$direct.upper -  res_adm11$res.admin2$direct.lower
-    
-    
-    
-    
-    # out2 <- res_adm11$res.admin2[, c("admin2.name.full", "direct.est", "direct.se",
-    #                            "cv", "direct.lower", "direct.upper")]
-    # colnames(out2)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-    # out2$version <- yr1
-    # out2$Prevalence= out2$Prevalence*100
-    # out2$upper= out2$upper*100
-    # out2$lower= out2$lower*100
-    # out2$width <- out2$upper - out2$lower
-    
-  }
-  if (ok12) {
-    # new$res.admin2$cv1 <- with(new$res.admin2,
-    #                                  pmax(sd / mean, sd / (1 - mean))
-    # )
-    # res_adm12$res.admin2$cv1 <-  with(res_adm12$res.admin2,
-    #                             sd / (mean * (1 - mean)))
-    
-    res_adm12$res.admin2$direct.est=res_adm12$res.admin2$direct.est*100
-    # res_adm12$admin2_post=res_adm12$admin2_post*100
-    # qs12 <- apply(res_adm12$admin2_post, 2, quantile,
-    #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-    # res_adm12$res.admin2$lower <- qs12[1, ]
-    # res_adm12$res.admin2$upper <- qs12[2, ]
-    res_adm12$res.admin2$width <-  res_adm12$res.admin2$direct.upper -  res_adm12$res.admin2$direct.lower
-    
-    # out22 <- res_adm12$res.admin2[, c("admin2.name.full", "direct.est", "direct.se",
-    #                                   "cv", "direct.lower", "direct.upper")]
-    # colnames(out22)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-    # out22$version <- yr2
-    # out22$Prevalence= out22$Prevalence*100
-    # out22$upper= out22$upper*100
-    # out22$lower= out22$lower*100
-    # out22$width <- out22$upper - out22$lower
-    
-  }
-  ok21 <- has_data(old)
-  ok22 <- has_data(new)
-  out2=out22=c()
-  if (ok21) {
-    #
-    #
-    # old$res.admin2$cv1 <-  with(old$res.admin2,
-    #                             sd / (mean * (1 - mean)))
-    #
-    
-    old$res.admin2$mean=old$res.admin2$mean*100
-    # old$admin2_post=old$admin2_post*100
-    # qs11 <- apply(old$admin2_post, 2, quantile,
-    #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-    # old$res.admin2$lower <- qs11[1, ]
-    # old$res.admin2$upper <- qs11[2, ]
-    old$res.admin2$width <-  old$res.admin2$upper -  old$res.admin2$lower
-
-    #
-    # out2 <- old$res.admin2[, c("admin2.name.full", "mean", "sd",
-    #                            "cv", "lower", "upper")]
-    # colnames(out2)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-    # out2$version <- yr1
-    # out2$Prevalence= out2$Prevalence*100
-    # out2$upper= out2$upper*100
-    # out2$lower= out2$lower*100
-    # out2$width <- out2$upper - out2$lower
-    
-  }
-  if (ok22) {
-    # new$res.admin2$cv1 <- with(new$res.admin2,
-    #                                  pmax(sd / mean, sd / (1 - mean))
-    # # )
-    # new$res.admin2$cv1 <-  with(new$res.admin2,
-    #                             sd / (mean * (1 - mean)))
-    #
-    
-    new$res.admin2$mean=new$res.admin2$mean*100
-    # new$admin2_post=new$admin2_post*100
-    # qs12 <- apply(new$admin2_post, 2, quantile,
-    #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-    # new$res.admin2$lower <- qs12[1, ]
-    # new$res.admin2$upper <- qs12[2, ]
-    
-    new$res.admin2$width <-  new$res.admin2$upper -  new$res.admin2$lower
-    # out22 <- new$res.admin2[, c("admin2.name.full", "mean", "sd",
-    #                             "cv", "lower", "upper")]
-    # colnames(out22)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-    # out22$version <- yr2
-    # out22$Prevalence= out22$Prevalence*100
-    # out22$upper= out22$upper*100
-    # out22$lower= out22$lower*100
-    # out22$width <- out22$upper - out22$lower
-    
-  }
-  if (ok11 && ok12  && ok21 && ok22 ) {
-    # ----- both years available -----
-    
-    s5 <- scatterPlot(
-      res1=res_adm11$res.admin2,
-      res2=old$res.admin2,
-      value1="direct.est",
-      value2="mean",
-      by.res1="admin2.name.full",
-      by.res2="admin2.name.full",
-      title= paste0(yr1," Prevalence"),
-      label1="Unsmoothed",
-      label2="Smoothed")
-    
-    s6 <- scatterPlot(
-      res1=res_adm12$res.admin2,
-      res2=new$res.admin2,
-      value1="direct.est",
-      value2="mean",
-      by.res1="admin2.name.full",
-      by.res2="admin2.name.full",
-      title= paste0(yr2," Prevalence"),
-      label1="Unsmoothed",
-      label2="Smoothed")
-    
-    s55 <- scatterPlot(
-      res1=res_adm11$res.admin2,
-      res2=old$res.admin2,
-      value1="width",
-      value2="width",
-      by.res1="admin2.name.full",
-      by.res2="admin2.name.full",
-      title= paste0(yr1," 90% CI width"),
-      label1="Unsmoothed",
-      label2="Smoothed")
-    
-    s66 <- scatterPlot(
-      res1=res_adm12$res.admin2,
-      res2=new$res.admin2,
-      value1="width",
-      value2="width",
-      by.res1="admin2.name.full",
-      by.res2="admin2.name.full",
-      title= paste0(yr2," 90% CI width"),
-      label1="Unsmoothed",
-      label2="Smoothed")
-    
-    
-    
-    scatter= (s5+ s6 ) /(s55+s66)
-    
-    
-    
-    
-    
-    
-  } else {
-    # ----- at least one year missing -----
-    # ----- compute metrics only when present -----
-    
-    
-    
-    # Prevalence
-    g1_left <- if (ok11&ok21) {
-      
-      
-      s5 <- scatterPlot(
-        res1=res_adm11$res.admin2,
-        res2=old$res.admin2,
-        value1="direct.est",
-        value2="mean",
-        by.res1="admin2.name.full",
-        by.res2="admin2.name.full",
-        title= paste0(yr1," Prevalence"),
-        label1="Unsmoothed",
-        label2="Smoothed")
-      
-      
-      
-      s55 <- scatterPlot(
-        res1=res_adm11$res.admin2,
-        res2=old$res.admin2,
-        value1="width",
-        value2="width",
-        by.res1="admin2.name.full",
-        by.res2="admin2.name.full",
-        title= paste0(yr1," 90% CI width"),
-        label1="Unsmoothed",
-        label2="Smoothed")
-      
-      
-      s5/s55
-      
-    } else {
-      make_placeholder(yr1, "Scatter")
+    # ---- Put everything on the same scale ----
+    # direct: direct.est in %, width = 90% CI width in percentage points
+    if (ok11) {
+      res_adm11$res.admin2$direct.est <-
+        res_adm11$res.admin2$direct.est * factorr
+      res_adm11$res.admin2$width <-
+        (res_adm11$res.admin2$direct.upper -
+           res_adm11$res.admin2$direct.lower) * factorr
     }
     
-    g1_right <- if (ok12&ok22){
-      
-      s6 <- scatterPlot(
-        res1=res_adm12$res.admin2,
-        res2=new$res.admin2,
-        value1="direct.est",
-        value2="mean",
-        by.res1="admin2.name.full",
-        by.res2="admin2.name.full",
-        title= paste0(yr2," Prevalence"),
-        label1="Unsmoothed",
-        label2="Smoothed")
-      
-      
-      
-      s66 <- scatterPlot(
-        res1=res_adm12$res.admin2,
-        res2=new$res.admin2,
-        value1="width",
-        value2="width",
-        by.res1="admin2.name.full",
-        by.res2="admin2.name.full",
-        title= paste0(yr2," 90% CI width"),
-        label1="Unsmoothed",
-        label2="Smoothed")
-      
-      s6/s66
-    } else {
-      make_placeholder(yr2, "Scatter")
+    if (ok12) {
+      res_adm12$res.admin2$direct.est <-
+        res_adm12$res.admin2$direct.est * factorr
+      res_adm12$res.admin2$width <-
+        (res_adm12$res.admin2$direct.upper -
+           res_adm12$res.admin2$direct.lower) * factorr
     }
     
-    scatter=g1_left|g1_right
+    # smoothed: mean in %, width = 90% CI width in percentage points
+    if (ok21) {
+      old$res.admin2$median  <- old$res.admin2$median * factorr
+      old$res.admin2$width <- (old$res.admin2$upper -
+                                 old$res.admin2$lower) * factorr
+    }
     
+    if (ok22) {
+      new$res.admin2$median  <- new$res.admin2$median * factorr
+      new$res.admin2$width <- (new$res.admin2$upper -
+                                 new$res.admin2$lower) * factorr
+    }
+    
+    # ---- Build plots ----
+    if (ok11 && ok12 && ok21 && ok22) {
+      # Both years available, all models
+      
+      s5 <- scatterPlot1(
+        res1    = res_adm11$res.admin2,
+        value1  = "direct.est",
+        res2    = old$res.admin2,
+        value2  = "median",
+        by.res1 = "admin2.name.full",
+        by.res2 = "admin2.name.full",
+        title   = paste0(yr1, " ", title_prev),
+        label1  = val_xlab,
+        label2  = val_ylab
+      )
+      # grab the common range currently used by the plot
+      lim <- range(ggplot_build(s5)$data[[2]][, c("x","y")], na.rm = TRUE)
+      pad <- 0.03 * diff(lim)
+      lim <- lim + c(-pad, pad)
+      s5<-s5 +
+        coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+        scale_x_continuous(limits = lim, labels = labels_scatter) +
+        scale_y_continuous(limits = lim, labels = labels_scatter)
+      
+      s6 <- scatterPlot1(
+        res1    = res_adm12$res.admin2,
+        value1  = "direct.est",
+        res2    = new$res.admin2,
+        value2  = "median",
+        by.res1 = "admin2.name.full",
+        by.res2 = "admin2.name.full",
+        title   = paste0(yr2, " ", title_prev),
+        label1  = val_xlab,
+        label2  = val_ylab
+      )
+      # grab the common range currently used by the plot
+      lim <- range(ggplot_build(s6)$data[[2]][, c("x","y")], na.rm = TRUE)
+      pad <- 0.03 * diff(lim)
+      lim <- lim + c(-pad, pad)
+      s6<-s6 +
+        coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+        scale_x_continuous(limits = lim, labels = labels_scatter) +
+        scale_y_continuous(limits = lim, labels = labels_scatter)
+      
+      
+      s55 <- scatterPlot1(
+        res1    = res_adm11$res.admin2,
+        value1  = "width",
+        res2    = old$res.admin2,
+        value2  = "width",
+        by.res1 = "admin2.name.full",
+        by.res2 = "admin2.name.full",
+        title   = paste0(yr1, " ", title_width),
+        label1  = width_xlab,
+        label2  = width_ylab
+      )
+      # grab the common range currently used by the plot
+      lim <- range(ggplot_build(s55)$data[[2]][, c("x","y")], na.rm = TRUE)
+      pad <- 0.03 * diff(lim)
+      lim <- lim + c(-pad, pad)
+      s55<-s55 +
+        coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+        scale_x_continuous(limits = lim, labels = labels_scatter) +
+        scale_y_continuous(limits = lim, labels = labels_scatter)
+      
+      s66 <- scatterPlot1(
+        res1    = res_adm12$res.admin2,
+        value1  = "width",
+        res2    = new$res.admin2,
+        value2  = "width",
+        by.res1 = "admin2.name.full",
+        by.res2 = "admin2.name.full",
+        title   = paste0(yr2, " ", title_width),
+        label1  = width_xlab,
+        label2  = width_ylab
+        )
+        # grab the common range currently used by the plot
+        lim <- range(ggplot_build(s66)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s66<-s66 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
+        
+    
+      
+      scatter <- (s5 + s6) / (s55 + s66)
+      
+    } else {
+      # At least one year missing – use placeholders where needed
+      
+      g1_left <- if (ok11 && ok21) {
+        s5 <- scatterPlot1(
+          res1    = res_adm11$res.admin2,
+          value1  = "direct.est",
+          res2    = old$res.admin2,
+          value2  = "median",
+          by.res1 = "admin2.name.full",
+          by.res2 = "admin2.name.full",
+          title   = paste0(yr1, " ", title_prev),
+          label1  = val_xlab,
+          label2  = val_ylab
+        )
+        # grab the common range currently used by the plot
+        lim <- range(ggplot_build(s5)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s5<-s5 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
+        
+        
+        s55 <- scatterPlot1(
+          res1    = res_adm11$res.admin2,
+          value1  = "width",
+          res2    = old$res.admin2,
+          value2  = "width",
+          by.res1 = "admin2.name.full",
+          by.res2 = "admin2.name.full",
+          title   = paste0(yr1, " ", title_width),
+          label1  = width_xlab,
+          label2  = width_ylab
+        )
+        lim <- range(ggplot_build(s55)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s55<-s55 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
+        
+        
+        s5 / s55
+      } else {
+        make_placeholder(yr1, "Scatter")
+      }
+      
+      g1_right <- if (ok12 && ok22) {
+        s6 <- scatterPlot1(
+          res1    = res_adm12$res.admin2,
+          value1  = "direct.est",
+          res2    = new$res.admin2,
+          value2  = "median",
+          by.res1 = "admin2.name.full",
+          by.res2 = "admin2.name.full",
+          title   = paste0(yr2, " ", title_prev),
+          label1  = val_xlab,
+          label2  = val_ylab
+        )
+        lim <- range(ggplot_build(s6)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s6<-s6 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
+        
+        s66 <- scatterPlot1(
+          res1    = res_adm12$res.admin2,
+          value1  = "width",
+          res2    = new$res.admin2,
+          value2  = "width",
+          by.res1 = "admin2.name.full",
+          by.res2 = "admin2.name.full",
+          title   = paste0(yr2, " ", title_width),
+          label1  = width_xlab,
+          label2  = width_ylab
+        )
+        lim <- range(ggplot_build(s66)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s66<-s66 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
+        
+        s6 / s66
+      } else {
+        make_placeholder(yr2, "Scatter")
+      }
+      
+      scatter <- g1_left | g1_right
+    }
+    
+    # ---- Save plot ----
+    ggsave(
+      filename = file.path(plot_path_c, paste0("scatter-", indicator, ".png")),
+      plot     = scatter,
+      width    = 10,
+      height   = 10,
+      dpi      = dpi
+    )
   }
-  
-  
-  
-  ggsave(scatter,
-         filename = file.path(plot_path_c, paste0("scatter-", indicator, ".png")),
-         width = 10, height = 10, dpi = 300)
-  
-  
-  
-  
-  
 }
-}
+
+
+
 
 
 
@@ -370,6 +369,15 @@ savescatter( country= "Nigeria",
              ad2_name= "new_FH_adm2_fix_nest-",
              ad2_name_dir=  "new_res_adm2_fix-",
              middle_path="Gates-results/Results",
+             plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
+
+
+
+savescatter( country= country,
+             ad2_name= "new_FH_adm2_fix_nest-",
+             ad2_name_dir=  "new_res_adm2_fix-",
+             middle_path="Gates-results/Results",
+             indicatorlist = infolist$ID[18],
              plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
 
 

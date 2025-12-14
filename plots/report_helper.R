@@ -42,16 +42,16 @@ save_tab1 <- function(country,
   label_df <- dplyr::select(infolist, ID, Description)
   tab <- grid |>
     dplyr::left_join(label_df, by = c("indicator" = "ID")) |>
-    dplyr::mutate(
-      Indicator = dplyr::if_else(is.na(Description) | Description == "", indicator, Description),
+    dplyr::mutate( 
+      ID = indicator, #dplyr::if_else(is.na(Description) | Description == "", indicator, Description)
       value = ifelse(is.na(value), NA, round(100 * value, 1))  # percent with 1 decimal
     ) |>
-    dplyr::select(Indicator, year, value) |>
+    dplyr::select(ID, year, value) |>
     tidyr::pivot_wider(
       names_from = year, values_from = value,
       names_prefix = "DHS "
-    ) |>
-    dplyr::arrange(Indicator)
+    ) 
+  
   print(tab)
   # write CSV
   out_dir <- file.path(source_path, out_middle, country)
@@ -61,7 +61,6 @@ save_tab1 <- function(country,
   
   invisible(tab)
 }
-
 
 # Table 3: number of no admin 2 and unstable variance 
 # 
@@ -359,20 +358,29 @@ save_tab2_from_files <- function(country, adm_name = "res_adm0-", ids = indicato
   }
   
   # format helper (whole %)
-  fmt_pct0 <- function(x) ifelse(is.na(x), NA, round(100 * x, 0))
+  fmt_pct0 <- function(x) ifelse(is.na(x), NA, round(x, 2))
   
   # one row per indicator
   one_row <- function(ind) {
     mat <- do.call(rbind, lapply(years, function(yr) read_triplet(ind, yr)))
     colnames(mat) <- c("est", "lower", "upper")
-    ok <- which(!is.na(mat[, "est"]))
     
-    prev <- c(NA_real_, NA_real_, NA_real_)
-    curr <- c(NA_real_, NA_real_, NA_real_)
-    if (length(ok) >= 1) curr <- mat[ok[length(ok)], ]
-    if (length(ok) >= 2) prev <- mat[ok[length(ok) - 1], ]
+    # default NA triplets
+    prev <- rep(NA_real_, 3)
+    curr <- rep(NA_real_, 3)
+    
+    # first row = previous year (yr1)
+    if (nrow(mat) >= 1 && !all(is.na(mat[1, ]))) {
+      prev <- mat[1, ]
+    }
+    
+    # second row = current year (yr2)
+    if (nrow(mat) >= 2 && !all(is.na(mat[2, ]))) {
+      curr <- mat[2, ]
+    }
     
     prev <- fmt_pct0(prev); curr <- fmt_pct0(curr)
+    prev <- unname(prev);   curr <- unname(curr)
     
     if (identical(country, "South Africa")) {
       data.frame(
@@ -380,7 +388,7 @@ save_tab2_from_files <- function(country, adm_name = "res_adm0-", ids = indicato
         current_est   = curr[1],
         current_lower = curr[2],
         current_upper = curr[3],
-        check.names = FALSE
+        check.names   = FALSE
       )
     } else {
       data.frame(
@@ -391,7 +399,7 @@ save_tab2_from_files <- function(country, adm_name = "res_adm0-", ids = indicato
         current_est    = curr[1],
         current_lower  = curr[2],
         current_upper  = curr[3],
-        check.names = FALSE
+        check.names    = FALSE
       )
     }
   }
@@ -902,7 +910,8 @@ savemaps_ridge<-function(country="Nigeria",
                          indicatorlist =infolist$ID,
                          adm_name = "new_res_adm0-",
                          middle_path="Gates-results/Results",
-                         plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country)
+                         plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country),
+                         dpi = 150
 ){
   
   
@@ -915,9 +924,7 @@ savemaps_ridge<-function(country="Nigeria",
   tab2<-save_tab2_from_files(country,adm_name =adm_name,infolist$ID)
   # ad2_name<-"new_FH_adm2_fix_nest-"
   # country="Nigeria"X
-  
-
-  results_path<-file.path(source_path, middle_path, country, yr2)
+  results_path<-file.path(source_path, middle_path, country, yr1)
   load(file.path(results_path, "basic.Rdata"))
   # poly.adm2 <- ms_simplify(poly.adm2, keep = 0.1, keep_shapes = TRUE)  # keep ~10% of vertices
   # plot_path_c<- file.path(source_path,"Gates-results/ReportPlots",country)
@@ -928,6 +935,41 @@ savemaps_ridge<-function(country="Nigeria",
     } else {
       color.paletteHERE <- brewer.pal(5, "RdYlGn")
     }
+    
+    
+    if(indicator %in% c("CM_ECMR_C_NNF")){
+      
+      thre1 = tab2[tab2$ID==indicator, ]$previous_est 
+      thre2 = tab2[tab2$ID==indicator, ]$current_est  
+      
+      LABELS = function(x) x * 1000
+      scale_fill_gradientn_prevalence<-scale_fill_gradientn(colors = color.paletteHERE, name = "Rate",labels = LABELS)
+      
+      facet_labels = c(
+        paste0(yr1, " National: ", thre1* 1000, " per 1,000"),
+        paste0(yr2, " National: ", thre2* 1000, " per 1,000")
+      )
+      
+      exceedlegend_singleyear1 <- paste0("Probability\nExceeding ", thre1*1000 )
+      exceedlegend_singleyear2 <- paste0("Probability\nExceeding ", thre2*1000 )
+      
+      
+    } else {
+      
+      thre1 = tab2[tab2$ID==indicator, ]$previous_est 
+      thre2 = tab2[tab2$ID==indicator, ]$current_est  
+      
+      LABELS = scales::percent_format(accuracy = 1)
+      scale_fill_gradientn_prevalence<-scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence",labels = LABELS)
+      facet_labels = c(
+        paste0(yr1, " National: ", thre1* 100, "%"),
+        paste0(yr2, " National: ", thre2* 100, "%")
+      )
+      exceedlegend_singleyear1 <- paste0("Probability\nExceeding ", thre1*100, "%\n")
+      exceedlegend_singleyear2 <- paste0("Probability\nExceeding ", thre2*100, "%\n")
+      
+    }
+    
     
     
     
@@ -976,7 +1018,8 @@ savemaps_ridge<-function(country="Nigeria",
         # legend.label = year_label,
         size = .05,
         border = "gray50"
-      ) + scale_layer
+      ) +
+        scale_layer
       # + ggtitle(as.character(year_label))
       mp
     }
@@ -985,28 +1028,31 @@ savemaps_ridge<-function(country="Nigeria",
     if (ok11) {
       
       
-      out1 <- old$res.admin2[, c("admin2.name.full", "mean", "sd",
+      out1 <- old$res.admin2[, c("admin2.name.full", "median", "sd",
                                  "lower", "upper", "cv2")]
       colnames(out1)[c(2)] <- c("Prevalence")
       out1$version <- yr1
-      out1$Prevalence= out1$Prevalence*100
-      out1$upper= out1$upper*100
-      out1$lower= out1$lower*100
+      
       out1$width <- out1$upper - out1$lower
+      out1$oddratio<- out1$Prevalence/(1-out1$Prevalence)
+      out1$oddratio<- log( (out1$Prevalence/(1-out1$Prevalence)) / ( thre1/ (1-thre1)))
+      
       
     }
     
     if (ok12) {
       
       
-      out11 <- new$res.admin2[, c("admin2.name.full", "mean", "sd",
+      out11 <- new$res.admin2[, c("admin2.name.full", "median", "sd",
                                   "lower", "upper", "cv2")]
       colnames(out11)[c(2)] <- c("Prevalence")
       out11$version <- yr2
-      out11$Prevalence= out11$Prevalence*100
-      out11$upper= out11$upper*100
-      out11$lower= out11$lower*100
+      
       out11$width <- out11$upper - out11$lower
+      out11$oddratio<- log( (out11$Prevalence/(1-out11$Prevalence)) / ( thre2/ (1-thre2)))
+      
+      
+      exceedlegend_singleyear <- paste0("Probability\nExceeding ", thre1, "%\n")
       
     }
     
@@ -1023,40 +1069,31 @@ savemaps_ridge<-function(country="Nigeria",
                     by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
                     variable = "version", value = "Prevalence", legend.label = "Prevalence",
                     direction = -1, ncol = 2, size = .05, border = "gray50") +
-        scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence")
-      
-      # g2 <- mapPlot(data = outadm2, geo = poly.adm2,
-      #               by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
-      #               variable = "version", value = "sd", legend.label = "sd",
-      #               ncol = 2, size = .05, border = "gray50") +
-      #   scale_fill_viridis_c("sd", option = "F", direction = -1)
-      #
-      # g3 <- mapPlot(data = outadm2, geo = poly.adm2,
-      #               by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
-      #               variable = "version", value =  legend.label = 
-      #               ncol = 2, size = .05, border = "gray50") +
-      #   scale_fill_viridis_c( option = "G", direction = -1)
+        scale_fill_gradientn_prevalence
       
       g4 <- mapPlot(data = outadm2, geo = poly.adm2,
                     by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
                     variable = "version", value = "width", legend.label = "90% CI\nwidth",
                     ncol = 2, size = .05, border = "gray50") +
-        scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth")
+        scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"), 
+                               name = "90% CI\nwidth",
+                               labels = LABELS)
       
+      rng <- range(outadm2$oddratio, na.rm = TRUE)
+      g2 <- mapPlot(data = outadm2, geo = poly.adm2,
+                    by.data = "admin2.name.full",  by.geo = "admin2.name.full", is.long = TRUE,
+                    variable = "version", value = "oddratio",
+                    ncol = 2, size = .05, border = "gray50")  +
+        scale_fill_distiller(
+          palette = "Spectral",
+          values = scales::rescale(c(rng[1], 0, rng[2])),
+          name    = "Log odds ratio"
+        )
       
-      
-      
-      thre1=tab2[tab2$ID==indicator,]$previous_est
-      thre2=tab2[tab2$ID==indicator,]$current_est
-      old$admin2_post= old$admin2_post*100
-      new$admin2_post= new$admin2_post*100
       
       g5 <- exceedPlot1(
         x = list(old,  new),
-        facet_labels = c(
-          paste0(yr1, " National: ", thre1, "%"),
-          paste0(yr2," National: " ,  thre2, "%")
-        ),
+        facet_labels = facet_labels,
         threshold = c(thre1, thre2),
         exceed = TRUE, direction = infolist[infolist$ID == indicator, ]$direction ,
         geo = poly.adm2, by.geo = "admin2.name.full",
@@ -1065,7 +1102,8 @@ savemaps_ridge<-function(country="Nigeria",
       ) +
         scale_fill_distiller(name = "Exceedance\nProbability",
                              palette = "Spectral", direction = infolist[infolist$ID == indicator, ]$direction,
-                             limits = c(0,1), breaks = c(0.25,0.5,0.75))
+                             limits = c(0,1), breaks = c(0.25,0.5,0.75),
+                             labels = scales::percent_format(accuracy = 1))
       
       
       
@@ -1076,19 +1114,18 @@ savemaps_ridge<-function(country="Nigeria",
       
       # ----- at least one year missing -----
       # ----- compute metrics only when present -----
-      
-      
-      
       # Prevalence
       g1_left <- if (ok11) {
         plot_one_year(out1, yr1, "Prevalence", "Prevalence",
-                      scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence"))
+                      scale_fill_gradientn_prevalence)
+        # scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence",labels = LABELS))
       } else {
         make_placeholder(yr1, "Prevalence")
       }
       g1_right <- if (ok12) {
         plot_one_year(out11, yr2, "Prevalence", "Prevalence",
-                      scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence"))
+                      scale_fill_gradientn_prevalence)
+        # scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence",labels = LABELS))
       } else {
         make_placeholder(yr2, "Prevalence")
       }
@@ -1098,31 +1135,26 @@ savemaps_ridge<-function(country="Nigeria",
       # 90% CI width
       g4_left <- if (ok11) {
         plot_one_year(out1, yr1, "width", "90% CI\nwidth",
-                      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth"))
+                      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth",labels = LABELS))
       } else {
         make_placeholder(yr1, "90% CI width")
       }
       g4_right <- if (ok12) {
         plot_one_year(out11, yr2, "width", "90% CI\nwidth",
-                      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth"))
+                      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth",labels = LABELS))
       } else {
         make_placeholder(yr2, "90% CI width")
       }
       g4 <- g4_left | g4_right
       
-      
-      
       # Exceedance
       g5_left <- if (ok11) {
         
         
-        thre1=tab2[tab2$ID==indicator,]$previous_est
+        # thre1=tab2[tab2$ID==indicator,]$previous_est
         # thre2=tab2[tab2$ID==indicator,]$current_est
-        old$admin2_post=old$admin2_post*100
-        # res_adm12$admin1_post=res_adm12$admin1_post*100
-        
-        
-        legend <- paste0("Probability\nExceeding ", thre1, "%\n")
+        # old$admin2_post=old$admin2_post*100
+        # exceedlegend_singleyear <- paste0("Probability\nExceeding ", thre1, "%\n")
         exceedplot3(
           old,
           threshold = thre1,
@@ -1134,8 +1166,9 @@ savemaps_ridge<-function(country="Nigeria",
           border = "gray80",
           size = 0
         )+
-          scale_fill_distiller(legend, palette = "Spectral",
-                               direction =  infolist[infolist$ID == indicator, ]$direction     )
+          scale_fill_distiller(exceedlegend_singleyear1, palette = "Spectral",
+                               direction =  infolist[infolist$ID == indicator, ]$direction ,
+                               , labels = scales::percent_format(accuracy = 1))
         
         
       } else {
@@ -1143,12 +1176,12 @@ savemaps_ridge<-function(country="Nigeria",
       }
       g5_right <- if (ok12) {
         
-        # thre1=tab2[tab2$ID==indicator,]$previous_est
-        thre2=tab2[tab2$ID==indicator,]$current_est
-        # res_adm11$admin1_post=res_adm11$admin1_post*100
-        new$admin2_post=new$admin2_post*100
-        # names(new$res.admin2)[names(new$res.admin2) == value_col] <- yr2
-        
+        # # thre1=tab2[tab2$ID==indicator,]$previous_est
+        # thre2=tab2[tab2$ID==indicator,]$current_est
+        # # res_adm11$admin1_post=res_adm11$admin1_post*100
+        # new$admin2_post=new$admin2_post*100
+        # # names(new$res.admin2)[names(new$res.admin2) == value_col] <- yr2
+        # 
         legend <- paste0("Probability\nExceeding ", thre2, "%\n")
         
         exceedplot3(
@@ -1162,8 +1195,9 @@ savemaps_ridge<-function(country="Nigeria",
           border = "gray80",
           size = 0
         )+
-          scale_fill_distiller(legend, palette = "Spectral",
-                               direction =  infolist[infolist$ID == indicator, ]$direction     )
+          scale_fill_distiller(exceedlegend_singleyear2, palette = "Spectral",
+                               direction =  infolist[infolist$ID == indicator, ]$direction,
+                               , labels = scales::percent_format(accuracy = 1))
         
       } else {
         make_placeholder(yr2, "Exceedance")
@@ -1177,14 +1211,11 @@ savemaps_ridge<-function(country="Nigeria",
     
     final_plot <- (g1 / g4/ g5) + plot_layout(heights = c(1,1,1))
     
-    
-    
-    
     # stack the four rows
     
     ggsave(final_plot,
            filename = file.path(plot_path_c, paste0("ad2_map_", indicator, ".png")),
-           width = 6, height = 9, dpi = 300)
+           width = 6, height = 9, dpi = dpi)
     
     
   }
@@ -1205,6 +1236,44 @@ savemaps_ridge<-function(country="Nigeria",
     }
     
     
+    if(indicator %in% c("CM_ECMR_C_NNF")){
+      
+      thre1 = tab2[tab2$ID==indicator, ]$previous_est 
+      thre2 = tab2[tab2$ID==indicator, ]$current_est  
+      
+      LABELS = function(x) x * 1000
+      scale_fill_gradientn_prevalence<-scale_fill_gradientn(colors = color.paletteHERE, name = "Rate",labels = LABELS)
+      
+      facet_labels = c(
+        paste0(yr1, " National: ", thre1* 1000, " per 1,000"),
+        paste0(yr2, " National: ", thre2* 1000, " per 1,000")
+      )
+      exceedlegend_singleyear1 <- paste0("Probability\nExceeding ", thre1*1000)
+      exceedlegend_singleyear2 <- paste0("Probability\nExceeding ", thre2*1000)
+      
+      title_prev<-"Rate (per 1,000)"
+    } else {
+      
+      thre1 = tab2[tab2$ID==indicator, ]$previous_est 
+      thre2 = tab2[tab2$ID==indicator, ]$current_est  
+      
+      LABELS = scales::percent_format(accuracy = 1)
+      scale_fill_gradientn_prevalence<-scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence",labels = LABELS)
+      
+      facet_labels = c(
+        paste0(yr1, " National: ", thre1* 100, "%"),
+        paste0(yr2, " National: ", thre2* 100, "%")
+      )
+      
+      exceedlegend_singleyear1 <- paste0("Probability\nExceeding ", thre1*100, "%\n")
+      exceedlegend_singleyear2 <- paste0("Probability\nExceeding ", thre2*100, "%\n")
+      
+      title_prev<-"Prevalence (%)"
+    }
+    
+    
+    
+    
     res_adm11=res_adm12=c()
     
     yr1=min(surveys[surveys$country==country,]$year)
@@ -1220,8 +1289,6 @@ savemaps_ridge<-function(country="Nigeria",
     res_adm11 <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("tryCatched: Failed to read ", qfile_adm1, ": ", e$message); return("failed") })
     res_adm12 <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("tryCatched:Failed to read ", qfile_adm2, ": ", e$message); return("failed") })
     
-    # res_adm11 <- ad1_store[[iso3]][[as.character(yr1)]][[indicator]]
-    # res_adm12 <- ad1_store[[iso3]][[as.character(yr2)]][[indicator]]
     
     
     
@@ -1257,71 +1324,28 @@ savemaps_ridge<-function(country="Nigeria",
     }
     
     
-    
-    
     out1=out11=c()
     if (ok11) {
-      # res_adm11$res.admin1$cv2 <- with(res_adm11$res.admin1,
-      #                                  pmax(direct.se / direct.est, direct.se / (1 - direct.est))
-      # )
-      # res_adm11$admin1_post= redrawsample(res_adm11,nsim=1000)
-      # 
-      # res_adm11$res.admin1$cv2 <-  with(res_adm11$res.admin1,
-      #                                   direct.se / (direct.est * (1 - direct.est)))
-      # 
       
-      # 
-      # qs11 <- apply(res_adm11$admin1_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # res_adm11$res.admin1$direct.lower <- qs11[1, ]
-      # res_adm11$res.admin1$direct.upper <- qs11[2, ]
-      # 
       out1 <- res_adm11$res.admin1[, c("admin1.name", "direct.est", "direct.se",
                                        "direct.lower", "direct.upper")]
       colnames(out1)[c(2, 3, 4, 5)] <- c("Prevalence", "sd", "lower", "upper")
       out1$version <- yr1
-      
-      out1$Prevalence= out1$Prevalence*100
-      out1$upper= out1$upper*100
-      out1$lower= out1$lower*100
       out1$width <- out1$upper - out1$lower
+      out1$oddratio<-log( (out1$Prevalence/(1-out1$Prevalence)) / ( thre1/ (1-thre1)))
+      
     }
     
     if (ok12) {
-      # res_adm12$res.admin1$cv2 <- with(res_adm12$res.admin1,
-      #                                  pmax(direct.se / direct.est, direct.se / (1 - direct.est))
-      # )
-      # res_adm12$admin1_post= redrawsample(res_adm12,nsim=1000)
-      # 
-      # res_adm12$res.admin1$cv2 <-  with(res_adm12$res.admin1,
-      #                                   direct.se / (direct.est * (1 - direct.est)))
-      # 
-      # 
-      # qs12 <- apply(res_adm12$admin1_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # res_adm12$res.admin1$direct.lower <- qs12[1, ]
-      # res_adm12$res.admin1$direct.upper <- qs12[2, ]
-      
-      # out11 <- res_adm12$res.admin1[, c("admin1.name", "direct.est", "direct.se",
-      #                                    "direct.lower", "direct.upper", "cv2")]
-      # colnames(out11)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-      # out11$version <- yr2
-      # out11$width <- out11$upper - out11$lower
-      # 
-      # out11$Prevalence= out11$Prevalence*100
-      # out11$upper= out11$upper*100
-      # out11$lower= out11$lower*100
-      # 
       
       out11 <- res_adm12$res.admin1[, c("admin1.name", "direct.est", "direct.se",
                                         "direct.lower", "direct.upper")]
       colnames(out11)[c(2, 3, 4, 5)] <- c("Prevalence", "sd", "lower", "upper")
       out11$version <- yr2
       
-      out11$Prevalence= out11$Prevalence*100
-      out11$upper= out11$upper*100
-      out11$lower= out11$lower*100
       out11$width <- out11$upper - out11$lower
+      out11$oddratio<- log( (out11$Prevalence/(1-out11$Prevalence)) / ( thre2/ (1-thre2)))
+      
     }
     
     
@@ -1334,67 +1358,49 @@ savemaps_ridge<-function(country="Nigeria",
       # ----- both years available -----
       outadm2 <- rbind(out1, out11)
       outadm2$version <- factor(outadm2$version, levels = unique(outadm2$version))
-      # outadm2$Prevalence= outadm2$Prevalence*100
-      # outadm2$upper= outadm2$upper*100
-      # outadm2$lower= outadm2$lower*100
-      
       outadm2$width <- outadm2$upper - outadm2$lower
+      
+      # poly.adm1 <- poly.adm1 %>%
+      #   dplyr::left_join(outadm2, by = c("NAME_1" = "admin1.name"))
+      # hatching.gadm <- poly.adm1 %>%
+      #   subset(is.na(width) )
+      
+      
       g1 <- mapPlot(data = outadm2, geo = poly.adm1,
                     by.data = "admin1.name",  by.geo = "NAME_1", is.long = TRUE,
-                    variable = "version", value = "Prevalence", legend.label = "Prevalence",
-                    direction = -1, ncol = 2, size = .05, border = "gray50") +
-        scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence")
-      # theme_bw() +
-      # theme(
-      #   panel.grid = element_blank(),                 # no grid lines
-      #   # panel.border = element_rect(color = "black", fill = NA, size = 1), # black frame
-      #   strip.background = element_blank(),           # no grey facet bar
-      #   strip.text = element_text(size = 12), # year title on top
-      #   axis.text = element_blank(),                  # remove lat/lon text
-      #   axis.ticks = element_blank(),                 # remove ticks
-      #   axis.title = element_blank(),                 # remove axis titles
-      #   legend.position = "right"
-      # )
-      
-      # g2 <- mapPlot(data = outadm2, geo = poly.adm1,
-      #               by.data = "admin1.name",  by.geo = "NAME_1", is.long = TRUE,
-      #               variable = "version", value = "sd", legend.label = "sd",
-      #               ncol = 2, size = .05, border = "gray50") +
-      #   scale_fill_viridis_c("sd", option = "F", direction = -1)
+                    variable = "version", value = "Prevalence", legend.label = "",
+                    direction = -1, ncol = 2, size =0.05, border = "gray50") + #, size = .05, border = "gray50"
+        scale_fill_gradientn_prevalence
       
       
       g4 <- mapPlot(data = outadm2, geo = poly.adm1,
                     by.data = "admin1.name",  by.geo = "NAME_1", is.long = TRUE,
                     variable = "version", value = "width", legend.label = "90% CI\nwidth",
                     ncol = 2, size = .05, border = "gray50") +
-        scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth")
-      # scale_fill_viridis_c("90% CI\nwidth", option = "B", direction = -1)+
-      # theme_bw() +
-      # theme(
-      #   panel.grid = element_blank(),                 # no grid lines
-      #   # panel.border = element_rect(color = "black", fill = NA, size = 1), # black frame
-      #   strip.background = element_blank(),           # no grey facet bar
-      #   strip.text = element_text(size = 12), # year title on top
-      #   axis.text = element_blank(),                  # remove lat/lon text
-      #   axis.ticks = element_blank(),                 # remove ticks
-      #   axis.title = element_blank(),                 # remove axis titles
-      #   legend.position = "right"
-      # )
+        scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth",labels = LABELS)
       
       
       
+      rng <- range(outadm2$oddratio, na.rm = TRUE)
+      g2 <- mapPlot(data = outadm2, geo = poly.adm1,
+                    by.data = "admin1.name",  by.geo = "NAME_1", is.long = TRUE,
+                    variable = "version", value = "oddratio",
+                    ncol = 2, size = .05, border = "gray50"
+      )+
+        ggplot2::theme (legend.text=ggplot2::element_text(size=12),
+                        legend.title = ggplot2::element_text(size=14),
+                        strip.text.x = ggplot2::element_text(size = 12),
+                        legend.key.height = ggplot2::unit(1,'cm') )  +
+        scale_fill_distiller(
+          palette = "Spectral",
+          values = scales::rescale(c(rng[1], 0, rng[2])),
+          name    = "Log odds ratio"
+        )
       
-      thre1=tab2[tab2$ID==indicator,]$previous_est
-      thre2=tab2[tab2$ID==indicator,]$current_est
-      res_adm11$admin1_post=res_adm11$admin1_post*100
-      res_adm12$admin1_post=res_adm12$admin1_post*100
       
       g5 <- exceedPlot1(
         x = list(res_adm11,  res_adm12),
-        facet_labels = c(
-          paste0(yr1, " National: ", thre1, "%"),
-          paste0(yr2," National: " ,  thre2, "%")
-        ),
+        facet_labels = facet_labels,
         threshold = c(thre1, thre2),
         exceed = TRUE, direction = infolist[infolist$ID == indicator, ]$direction ,
         geo = poly.adm1, by.geo = "NAME_1",
@@ -1403,12 +1409,9 @@ savemaps_ridge<-function(country="Nigeria",
       ) +
         scale_fill_distiller(name = "Exceedance\nProbability",
                              palette = "Spectral", direction = infolist[infolist$ID == indicator, ]$direction ,
-                             limits = c(0,1), breaks = c(0.25,0.5,0.75))
-      
-      
-      
-      
-      
+                             limits = c(0,1), breaks = c(0.25,0.5,0.75),
+                             labels = scales::percent_format(accuracy = 1) 
+        )
       
     } else {
       # ----- at least one year missing -----
@@ -1419,13 +1422,13 @@ savemaps_ridge<-function(country="Nigeria",
       # Prevalence
       g1_left <- if (ok11) {
         plot_one_year(out1, yr1, "Prevalence", "Prevalence",
-                      scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence"))
+                      scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence", labels=LABELS))
       } else {
         make_placeholder(yr1, "Prevalence")
       }
       g1_right <- if (ok12) {
         plot_one_year(out11, yr2, "Prevalence", "Prevalence",
-                      scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence"))
+                      scale_fill_gradientn(colors = color.paletteHERE, name = "Prevalence", labels=LABELS))
       } else {
         make_placeholder(yr2, "Prevalence")
       }
@@ -1436,14 +1439,14 @@ savemaps_ridge<-function(country="Nigeria",
       # 90% CI width
       g4_left <- if (ok11) {
         plot_one_year(out1, yr1, "width", "90% CI\nwidth",
-                      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth"))
+                      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth", labels=LABELS))
         
       } else {
         make_placeholder(yr1, "90% CI width")
       }
       g4_right <- if (ok12) {
         plot_one_year(out11, yr2, "width", "90% CI\nwidth",
-                      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth"))
+                      scale_fill_gradientn(  colours =  RColorBrewer::brewer.pal(9, "Blues"),  name = "90% CI\nwidth", labels=LABELS))
       } else {
         make_placeholder(yr2, "90% CI width")
       }
@@ -1454,22 +1457,6 @@ savemaps_ridge<-function(country="Nigeria",
       g5_left <- if (ok11) {
         
         
-        thre1=tab2[tab2$ID==indicator,]$previous_est
-        # thre2=tab2[tab2$ID==indicator,]$current_est
-        res_adm11$admin1_post=res_adm11$admin1_post*100
-        # res_adm12$admin1_post=res_adm12$admin1_post*100
-        
-        
-        legend <- paste0("Probability\nExceeding ", thre1, "%\n")
-        # exceedplot2(res_adm11, threshold = thre1,
-        #            exceed = TRUE,
-        #            # value_col = as.character(yr1),
-        #            border = "gray80", size = 0,
-        #            geo = poly.adm1, by.geo = "NAME_1", ylim = c(0, 1)) +
-        #   scale_fill_distiller(legend, palette = "Spectral",
-        #                        direction =  infolist[infolist$ID == indicator, ]$direction     )
-        # 
-        # 
         
         exceedplot3(
           res_adm11,
@@ -1482,8 +1469,9 @@ savemaps_ridge<-function(country="Nigeria",
           border = "gray80",
           size = 0
         )+
-          scale_fill_distiller(legend, palette = "Spectral",
-                               direction =  infolist[infolist$ID == indicator, ]$direction     )
+          scale_fill_distiller(exceedlegend_singleyear1, palette = "Spectral",
+                               direction =  infolist[infolist$ID == indicator, ]$direction,
+                               labels = scales::percent_format(accuracy = 1) )
         
         
         
@@ -1494,12 +1482,6 @@ savemaps_ridge<-function(country="Nigeria",
       }
       g5_right <- if (ok12) {
         
-        # thre1=tab2[tab2$ID==indicator,]$previous_est
-        thre2=tab2[tab2$ID==indicator,]$current_est
-        # res_adm11$admin1_post=res_adm11$admin1_post*100
-        res_adm12$admin1_post=res_adm12$admin1_post*100
-        
-        legend <- paste0("Probability\nExceeding ", thre2, "%\n")
         
         
         exceedplot3(
@@ -1512,8 +1494,9 @@ savemaps_ridge<-function(country="Nigeria",
           by.geo = "NAME_1",
           border = "gray80",
           size = 0
-        )+scale_fill_distiller(legend, palette = "Spectral",
-                               direction =  infolist[infolist$ID == indicator, ]$direction     )
+        )+scale_fill_distiller(exceedlegend_singleyear2, palette = "Spectral",
+                               direction =  infolist[infolist$ID == indicator, ]$direction,
+                               labels = scales::percent_format(accuracy = 1) )
         
         
       } else {
@@ -1528,6 +1511,7 @@ savemaps_ridge<-function(country="Nigeria",
     
     
     
+    # final_plot_t <- (g1/ g4/ g5/ g2) + plot_layout(heights = c(1,1,1,1))
     
     
     final_plot <- (g1/ g4/ g5) + plot_layout(heights = c(1,1,1))
@@ -1547,11 +1531,14 @@ savemaps_ridge<-function(country="Nigeria",
     
     ggsave(final_plot,
            filename = file.path(plot_path_c, paste0("ad1_map_", indicator, ".png")),
-           width = 6, height = 9, dpi = 300)
+           width = 6, height = 9, dpi = dpi)
     
     
-    
-    
+    # ggsave(final_plot_t,
+    #        filename = file.path(plot_path_c, paste0("rate_test_ad1_map_", indicator, ".png")),
+    #        width = 6, height = 9, dpi = dpi)
+    # 
+    # 
     # --------------------
     # 
     # ----- ridge.   -----
@@ -1563,20 +1550,19 @@ savemaps_ridge<-function(country="Nigeria",
       
       
       if (infolist[infolist$ID == indicator, ]$direction == -1) {
-        color.paletteHERE <- (brewer.pal(5, "RdYlGn"))
-        colours =  rev(RColorBrewer::brewer.pal(9, "Blues"))
+        color.paletteHERE <- rev(brewer.pal(5, "RdYlGn"))
+        colours =  RColorBrewer::brewer.pal(9, "Blues")
       } else {
-        color.paletteHERE <- brewer.pal(5, "RdYlGn")
-        colours =  rev(RColorBrewer::brewer.pal(9, "Blues"))
+        color.paletteHERE <- (brewer.pal(5, "RdYlGn"))
+        colours =  RColorBrewer::brewer.pal(9, "Blues")
         
       }
       
       
-      
       # low_col  <- color.paletteHERE[1]
       # high_col <- color.paletteHERE[5]
-      low_col  <- colours[1]
-      high_col <- colours[5]
+      low_col  <- colours[5]
+      high_col <- colours[1]
       
       res_adm11$admin1_post= res_adm12$admin1_post-res_adm11$admin1_post
       
@@ -1585,18 +1571,24 @@ savemaps_ridge<-function(country="Nigeria",
       )+
         theme_bw() +
         theme(legend.position = "top",
-              legend.title = element_blank(),
+              # legend.title = element_blank(),
               axis.text.y  = element_text(size = 14)
-        )+
-        
-        scale_fill_gradientn( colours = color.paletteHERE)
+        )+ 
+        scale_fill_gradientn( 
+          name    = title_prev,
+          colours = color.paletteHERE,
+          labels  = LABELS) +
+        scale_x_continuous(
+          labels = LABELS
+        )
+      
+      
       
       my_order <- levels(v1$data$region.name)
       
       
       v2<- ridgePlot1(res_adm11,  by.year = TRUE,
                       palette = color.paletteHERE,
-                      
                       custom.order = my_order
                       
       )+
@@ -1606,18 +1598,20 @@ savemaps_ridge<-function(country="Nigeria",
                    linewidth = 0.6)+
         theme_bw() +
         theme(legend.position = "top",
-              legend.title = element_blank(),
+              # legend.title = element_blank(),
               axis.text.y  = element_text(size = 14)
         )+
-        # scale_fill_gradient2(
-        #   low = low_col, mid = "white", high = high_col,
-        #   midpoint = 0
-        # )
         scale_fill_gradientn(
-          colours = colours
-          # limits = c(min(df$value, na.rm = TRUE),
-          #            max(df$value, na.rm = TRUE))
+          name    = "Change",
+          colours = colours,
+          labels  = LABELS
+        )+ 
+        scale_x_continuous(
+          labels = LABELS
         )
+      
+      
+      
       g1= v1+v2
       
     } else {
@@ -1643,10 +1637,16 @@ savemaps_ridge<-function(country="Nigeria",
         )+
           theme_bw() +
           theme(legend.position = "top",
-                legend.title = element_blank(),
+                # legend.title = element_blank(),
                 axis.text.y  = element_text(size = 14)
-          )+
-          scale_fill_gradientn( colours = color.paletteHERE)
+          )+ 
+          scale_fill_gradientn( 
+            name    = title_prev,
+            colours = color.paletteHERE,
+            labels  = LABELS) +
+          scale_x_continuous(
+            labels = LABELS
+          )
       } else {
         make_placeholder(yr1, "Prevalence")
       }
@@ -1655,10 +1655,16 @@ savemaps_ridge<-function(country="Nigeria",
         )+
           theme_bw() +
           theme(legend.position = "top",
-                legend.title = element_blank(),
+                # legend.title = element_blank(),
                 axis.text.y  = element_text(size = 14)
-          )+
-          scale_fill_gradientn( colours = color.paletteHERE)
+          )+ 
+          scale_fill_gradientn( 
+            name    = title_prev,
+            colours = color.paletteHERE,
+            labels  = LABELS) +
+          scale_x_continuous(
+            labels = LABELS
+          )
       } else {
         make_placeholder(yr2, "Prevalence")
       }
@@ -1671,18 +1677,17 @@ savemaps_ridge<-function(country="Nigeria",
     
     ggsave(g1,
            filename = file.path(plot_path_c, paste0("ridge_", indicator, ".png")),
-           width = 15, height = 15, dpi = 300)
+           width = 15, height = 15, dpi = dpi)
     
     
     
     
   }
   
+  
+  
+  
 }
-
-
-
-
 
 
 
@@ -2216,7 +2221,8 @@ saveinterval_overlay<-function(
     ad2_name="new_FH_adm2_fix_nest-",
     indicatorlist =infolist$ID,
     middle_path="Gates-results/Results",
-    plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country)
+    plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country),
+    dpi=150
 ){
   
   
@@ -2240,7 +2246,29 @@ saveinterval_overlay<-function(
       
       
       
+      type="percentage"
+      if( indicator %in% c("CM_ECMR_C_NNF")){type="per1000"}
       
+      
+      # --- Titles depend on scale type ---
+      if (type == "probability") {
+        factorr=1
+        title_prev  <- "Prevalence"
+      } else if (type == "percentage") {
+        
+        title_prev  <- "Prevalence (%)"
+        LABELS=scales::label_percent(scale = 100)
+        factorr=100
+        labels_overley= scales::label_number(suffix = "%")
+        
+      } else { # per1000
+        
+        title_prev  <- "Rate (per 1,000)"
+        LABELS=scales::label_number(scale = 1000, accuracy = 1)
+        factorr=1000
+        labels_overley= scales::label_number(scale = 1)
+        
+      }
       
       
       yr1=min(surveys[surveys$country==country,]$year)
@@ -2276,132 +2304,11 @@ saveinterval_overlay<-function(
       ok12 <- has_data(res_adm12)
       
       
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      out1=out11=c()
-      if (ok11) {
-        # 
-        # res_adm11$res.admin1$direct.est= res_adm11$res.admin1$direct.est
-        # 
-        # res_adm11$res.admin1$cv1 <- with(res_adm11$res.admin1,
-        #                                  pmax(direct.se / direct.est, direct.se / (1 - direct.est))
-        # )
-        # res_adm11$admin1_post= redrawsample(res_adm11,nsim=1000)
-        # 
-        # res_adm11$res.admin1$cv1 <-  with(res_adm11$res.admin1,
-        #                                   direct.se / (direct.est * (1 - direct.est)))
-        # 
-        # 
-        # 
-        # qs11 <- apply(res_adm11$admin1_post, 2, quantile,
-        #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-        # res_adm11$res.admin1$direct.lower <- qs11[1, ]
-        # res_adm11$res.admin1$direct.upper <- qs11[2, ]
-        
-        out1 <- res_adm11$res.admin1[, c("admin1.name", "direct.est", "direct.se",
-                                         "direct.lower", "direct.upper")]
-        colnames(out1)[c(2, 3, 4,5)] <- c("Prevalence", "sd","lower", "upper")
-        out1$version <- yr1
-        out1$Prevalence= out1$Prevalence*100
-        out1$upper= out1$upper*100
-        out1$lower= out1$lower*100
-        out1$width <- out1$upper - out1$lower
-        
-      }
-      if (ok12) {
-        # 
-        #       res_adm12$admin1_post= redrawsample(res_adm12,nsim=1000)
-        #       
-        #       res_adm12$res.admin1$cv1 <-  with(res_adm12$res.admin1,
-        #                                         direct.se / (direct.est * (1 - direct.est)))
-        #       
-        # #       
-        #       qs12 <- apply(res_adm12$admin1_post, 2, quantile,
-        #                     probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-        # res_adm12$res.admin1$direct.lower <- qs12[1, ]
-        # res_adm12$res.admin1$direct.upper <- qs12[2, ]
-        
-        out11 <- res_adm12$res.admin1[, c("admin1.name", "direct.est", "direct.se",
-                                          "direct.lower", "direct.upper")]
-        colnames(out11)[c(2, 3, 4, 5)] <- c("Prevalence", "sd", "lower", "upper")
-        out11$version <- yr2
-        
-        out11$Prevalence= out11$Prevalence*100
-        out11$upper= out11$upper*100
-        out11$lower= out11$lower*100
-        out11$width <- out11$upper - out11$lower
-        
-      }
-      
-      
-      
-      
-      ok21 <- has_data(old)
-      ok22 <- has_data(new)
-      out2=out22=c()
-      if (ok21) {
-        # 
-        # old$res.admin2$cv1 <-  with(old$res.admin2,
-        #                             sd / (mean * (1 - mean)))
-        # 
-        # 
-        # 
-        # qs11 <- apply(old$admin2_post, 2, quantile,
-        #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-        # old$res.admin2$lower <- qs11[1, ]
-        # old$res.admin2$upper <- qs11[2, ]
-        
-        out2 <- old$res.admin2[, c("admin2.name.full", "mean", "sd",
-                                   "lower", "upper")]
-        colnames(out2)[c(2, 3, 4,5)] <- c("Prevalence", "sd","lower", "upper")
-        out2$version <- yr1
-        out2$Prevalence= out2$Prevalence*100
-        out2$upper= out2$upper*100
-        out2$lower= out2$lower*100
-        out2$width <- out2$upper - out2$lower
-        
-      }
-      if (ok22) {
-        # new$res.admin2$cv1 <- with(new$res.admin2,
-        #                                  pmax(sd / mean, sd / (1 - mean))
-        # )
-        # new$res.admin2$cv1 <-  with(new$res.admin2,
-        #                             sd / (mean * (1 - mean)))
-        # 
-        # 
-        # qs12 <- apply(new$admin2_post, 2, quantile,
-        #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-        # new$res.admin2$lower <- qs12[1, ]
-        # new$res.admin2$upper <- qs12[2, ]
-        # 
-        out22 <- new$res.admin2[, c("admin2.name.full", "mean", "sd",
-                                    "lower", "upper")]
-        colnames(out22)[c(2)] <- c("Prevalence")
-        out22$version <- yr2
-        out22$Prevalence= out22$Prevalence*100
-        out22$upper= out22$upper*100
-        out22$lower= out22$lower*100
-        out22$width <- out22$upper - out22$lower
-        
-      }
-      
-      
-      
       # --------------------
       # 
       # ----- interval -----
       # 
       # --------------------
-      
-      
-      
       
       if (ok11 && ok12  && ok21 && ok22 ) {
         # ----- both years available -----
@@ -2421,7 +2328,9 @@ saveinterval_overlay<-function(
               legend.position = "bottom",
               axis.title.x = element_blank(),
               axis.title.y = element_blank()
-            )
+            )+ scale_y_continuous(labels = LABELS) +
+            labs(color = title_prev)
+          
         }else{
           p <- intervalplot1(admin = 2,
                              compare = TRUE,
@@ -2438,7 +2347,8 @@ saveinterval_overlay<-function(
               legend.position = "bottom",
               axis.title.x = element_blank(),
               axis.title.y = element_blank()
-            ) +  scale_y_continuous(labels = scales::label_number(scale = 100))
+            ) +  scale_y_continuous(labels = LABELS) +
+            labs(color = title_prev)
           
         }
         
@@ -2455,7 +2365,8 @@ saveinterval_overlay<-function(
             legend.position = "bottom",
             axis.title.x = element_blank(),
             axis.title.y = element_blank()
-          )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+          )+  scale_y_continuous(labels = LABELS )+
+          labs(color = title_prev)
         
         
         
@@ -2483,7 +2394,8 @@ saveinterval_overlay<-function(
                 legend.position = "bottom",
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank()
-              )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+              )+  scale_y_continuous(labels = LABELS)+
+              labs(color = title_prev)
           }else{
             intevalplot1(admin = 2,
                          compare = TRUE,
@@ -2498,7 +2410,8 @@ saveinterval_overlay<-function(
                 legend.position = "bottom",
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank()
-              )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+              )+  scale_y_continuous(labels = LABELS)+
+              labs(color = title_prev)
           }
           
           
@@ -2518,7 +2431,8 @@ saveinterval_overlay<-function(
                 legend.position = "bottom",
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank()
-              )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+              )+  scale_y_continuous(labels =LABELS)+
+              labs(color = title_prev)
           }else{
             intevalplot1(admin = 2,
                          compare = TRUE,
@@ -2534,7 +2448,8 @@ saveinterval_overlay<-function(
                 legend.position = "bottom",
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank()
-              )+  scale_y_continuous(labels = scales::label_number(scale = 100))
+              )+  scale_y_continuous(labels =LABELS)+
+              labs(color = title_prev)
           }
           
         }else{
@@ -2546,11 +2461,8 @@ saveinterval_overlay<-function(
         
         
         
-        # Prevalence
+        # Prevalence admin 1 
         p1<- if (ok11) {
-          
-          
-          
           
           intervalPlot(admin = 1, compare = TRUE, model = list(
             "Baseline"= res_adm11
@@ -2562,13 +2474,12 @@ saveinterval_overlay<-function(
               legend.position = "bottom",
               axis.title.x = element_blank(),
               axis.title.y = element_blank()
-            )    +  scale_y_continuous(labels = scales::label_number(scale = 100))
+            )    +  scale_y_continuous(labels = LABELS)+
+            labs(color = title_prev)
           
         } else if(ok12) {
           intervalPlot(admin = 1, compare = TRUE, model = list(
-            
             "Latest"= res_adm12
-            
           ), sort_by = "Latest")+
             theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1))+
             guides(shape = guide_legend(override.aes = list(size = 2))) +   # legend size
@@ -2576,7 +2487,8 @@ saveinterval_overlay<-function(
               legend.position = "bottom",
               axis.title.x = element_blank(),
               axis.title.y = element_blank()
-            ) +  scale_y_continuous(labels = scales::label_number(scale = 100)) 
+            ) +  scale_y_continuous(labels = LABELS)+
+            labs(color = title_prev) 
         }else{
           make_placeholder("interval", "interval")
           
@@ -2585,12 +2497,12 @@ saveinterval_overlay<-function(
       ggsave(p ,
              filename = file.path(plot_path_c, paste0("interval-ad2-", indicator, ".png")),
              width = 15, height = 15,
-             dpi = 300)
+             dpi = dpi)
       
       ggsave(p1 ,
              filename = file.path(plot_path_c, paste0("interval-ad1-", indicator, ".png")),
              width = 15, height = 10,
-             dpi = 300)
+             dpi = dpi)
       
       
       
@@ -2602,6 +2514,57 @@ saveinterval_overlay<-function(
       # ----- overlay ------
       # 
       # --------------------
+      
+      
+      out1=out11=c()
+      if (ok11) {
+        out1 <- res_adm11$res.admin1[, c("admin1.name", "direct.est", "direct.se",
+                                         "direct.lower", "direct.upper")]
+        colnames(out1)[c(2, 3, 4,5)] <- c("Prevalence", "sd","lower", "upper")
+        out1$version <- yr1
+        out1$Prevalence= out1$Prevalence*factorr
+        out1$upper= out1$upper*factorr
+        out1$lower= out1$lower*factorr
+        out1$width <- out1$upper - out1$lower
+        
+      }
+      if (ok12) {
+        out11 <- res_adm12$res.admin1[, c("admin1.name", "direct.est", "direct.se",
+                                          "direct.lower", "direct.upper")]
+        colnames(out11)[c(2, 3, 4, 5)] <- c("Prevalence", "sd", "lower", "upper")
+        out11$version <- yr2
+        
+        out11$Prevalence= out11$Prevalence*factorr
+        out11$upper= out11$upper*factorr
+        out11$lower= out11$lower*factorr
+        out11$width <- out11$upper - out11$lower
+        
+      }
+      
+      out2=out22=c()
+      if (ok21) {
+        
+        out2 <- old$res.admin2[, c("admin2.name.full", "median", "sd",
+                                   "lower", "upper")]
+        colnames(out2)[c(2, 3, 4,5)] <- c("Prevalence", "sd","lower", "upper")
+        out2$version <- yr1
+        out2$Prevalence= out2$Prevalence*factorr
+        out2$upper= out2$upper*factorr
+        out2$lower= out2$lower*factorr
+        out2$width <- out2$upper - out2$lower
+        
+      }
+      if (ok22) {
+        out22 <- new$res.admin2[, c("admin2.name.full", "median", "sd",
+                                    "lower", "upper")]
+        colnames(out22)[c(2)] <- c("Prevalence")
+        out22$version <- yr2
+        out22$Prevalence= out22$Prevalence*factorr
+        out22$upper= out22$upper*factorr
+        out22$lower= out22$lower*factorr
+        out22$width <- out22$upper - out22$lower
+        
+      }   
       
       if (ok11 && ok12  && ok21 && ok22 ) {
         # ----- both years available -----
@@ -2634,14 +2597,16 @@ saveinterval_overlay<-function(
         Overlay=ggplot(out) +
           aes(x = Prevalence, y = reorder(admin1.name, mean_to_order, decreasing = FALSE), shape = admin, color = admin, alpha = admin, size = admin) +
           geom_point(alpha=0.7) +
-          scale_size_manual("Prevalence", values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
-          scale_alpha_manual("Prevalence", values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
-          scale_shape_manual("Prevalence", values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
-          scale_color_manual("Prevalence", values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
+          scale_size_manual(title_prev, values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
+          scale_alpha_manual(title_prev, values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
+          scale_shape_manual(title_prev, values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
+          scale_color_manual(title_prev, values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
           # scale_color_manual("version", values = c("firebrick1", "royalblue"), labels = c(yr1, yr2)) +
           facet_wrap(~version, ncol = 2) +
           theme_bw() + xlab("") + ylab("") +
-          theme(lengend.position = "bottom")
+          theme(lengend.position = "bottom")+
+          scale_x_continuous(labels = labels_overley)
+        
         # +
         # ggtitle(paste0(infolist[infolist$ID==indicator,]$Description))
         
@@ -2656,7 +2621,7 @@ saveinterval_overlay<-function(
         
         
         # Prevalence
-        g1_left <- if (ok11&ok21) {
+        g1_left <- if  (ok11&ok21) {
           
           outadm2 <- rbind(out2)
           outadm2$version <- factor(outadm2$version, levels = unique(outadm2$version))
@@ -2684,16 +2649,12 @@ saveinterval_overlay<-function(
           ggplot(out) +
             aes(x = Prevalence, y = reorder(admin1.name, mean_to_order, decreasing = FALSE), shape = admin, color = admin, alpha = admin, size = admin) +
             geom_point(alpha=0.7) +
-            scale_size_manual("Prevalence", values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
-            scale_alpha_manual("Prevalence", values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
-            scale_shape_manual("Prevalence", values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
-            scale_color_manual("Prevalence", values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
-            # scale_color_manual("version", values = c("firebrick1", "royalblue"), labels = c(yr1, yr2)) +
-            
-            # facet_wrap(~version, ncol = 2) +
-            theme_bw() + xlab("") + ylab("") +
-            theme(lengend.position = "bottom")+
-            ggtitle(paste0(infolist[infolist$ID==indicator,]$Description))
+            scale_size_manual(title_prev, values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
+            scale_alpha_manual(title_prev, values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
+            scale_shape_manual(title_prev, values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
+            scale_color_manual(title_prev, values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
+            theme_bw() + xlab("") + ylab("")+
+            scale_x_continuous(labels = labels_overley)
           
           
         } else {
@@ -2726,16 +2687,13 @@ saveinterval_overlay<-function(
           ggplot(out) +
             aes(x = Prevalence, y = reorder(admin1.name, mean_to_order, decreasing = FALSE), shape = admin, color = admin, alpha = admin, size = admin) +
             geom_point(alpha=0.7) +
-            scale_size_manual("Prevalence", values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
-            scale_alpha_manual("Prevalence", values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
-            scale_shape_manual("Prevalence", values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
-            scale_color_manual("Prevalence", values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
-            # scale_color_manual("version", values = c("firebrick1", "royalblue"), labels = c(yr1, yr2)) +
-            
-            # facet_wrap(~version, ncol = 2) +
-            theme_bw() + xlab("") + ylab("") +
-            theme(lengend.position = "bottom")+
-            ggtitle(paste0(infolist[infolist$ID==indicator,]$Description))
+            scale_size_manual( title_prev, values = c(6, 1.4), labels = c("Admin 1", "Admin 2")) +
+            scale_alpha_manual(title_prev, values = c(1, .6), labels = c("Admin 1", "Admin 2")) +
+            scale_shape_manual(title_prev, values = c(108, 16), labels = c("Admin 1", "Admin 2")) +
+            scale_color_manual(title_prev, values = c("violet", "royalblue"), labels = c("Admin 1", "Admin 2")) +
+            theme_bw() + xlab("") + ylab("")+
+            scale_x_continuous(labels = labels_overley)
+          
           
         } else {
           make_placeholder(yr2, "overlay")
@@ -2750,7 +2708,7 @@ saveinterval_overlay<-function(
       
       ggsave(Overlay,
              filename = file.path(plot_path_c, paste0("overlay-", indicator, ".png")),
-             width = 10, height = 6, dpi = 300)
+             width = 10, height = 6, dpi = dpi)
       
       
       
@@ -2831,309 +2789,310 @@ scatterPlot1 <- function(res1, value1, res2, value2, label1, label2,
 }
 
 
-savescatter<-function(
-    country= "Nigeria",
-    ad2_name= "new_FH_adm2_fix_nest-",
-    ad2_name_dir=  "new_res_adm2_fix-",
-    middle_path="Gates-results/Results",
-    plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country),
-    indicatorlist =infolist$ID
-){
+
+
+savescatter <- function(
+    country       = "Nigeria",
+    ad2_name      = "new_FH_adm2_fix_nest-",
+    ad2_name_dir  = "new_res_adm2_fix-",
+    middle_path   = "Gates-results/Results",
+    plot_path_c   = file.path(source_path, "Gates-results/ReportPlots", country),
+    indicatorlist = infolist$ID,
+    dpi           = 150
+) {
+  
+  # Ensure output directory exists
+  if (!dir.exists(plot_path_c)) {
+    dir.create(plot_path_c, recursive = TRUE, showWarnings = FALSE)
+  }
+  
+  # Years and paths (don’t recompute inside loop)
+  surv_cty <- surveys[surveys$country == country, ]
+  yr1 <- min(surv_cty$year)
+  yr2 <- max(surv_cty$year)
+  
+  results_path_yr1 <- file.path(source_path, middle_path, country, yr1)
+  results_path_yr2 <- file.path(source_path, middle_path, country, yr2)
+  
+  read_qs_safe <- function(path) {
+    tryCatch(
+      qs::qread(path),
+      error = function(e) {
+        message("Failed to read ", path, ": ", e$message)
+        NULL
+      }
+    )
+  }
+  
+  
   
   
   
   for (indicator in indicatorlist) {
     
+    type="percentage"
+    if( indicator %in% c("CM_ECMR_C_NNF")){type="per1000"}
     
     
+    # --- Titles depend on scale type ---
+    if (type == "probability") {
+      factorr=1
+      title_prev  <- "Prevalence"
+      title_width <- "90% CI width"
+    } else if (type == "percentage") {
+      factorr=100
+      title_prev  <- "Prevalence (%)"
+      title_width <- "90% CI width (%)"
+      labels_scatter<- scales::label_number(suffix = "%")
+      
+    } else { # per1000
+      factorr=1000
+      title_prev  <- "Rate (per 1,000)"
+      title_width <- "90% CI width (per 1,000)"
+      labels_scatter<- scales::label_number(scale = 1)
+    }
+    # axis labels are always just Smoothed / Unsmoothed
+    val_xlab   <- "Unsmoothed"
+    val_ylab   <- "Smoothed"
+    width_xlab <- "Unsmoothed"
+    width_ylab <- "Smoothed"
     
-    yr1=min(surveys[surveys$country==country,]$year)
-    yr2=max(surveys[surveys$country==country,]$year)
+    # ---- Load results ----
+    old       <- read_qs_safe(file.path(results_path_yr1, paste0(ad2_name,     indicator, ".qs")))
+    new       <- read_qs_safe(file.path(results_path_yr2, paste0(ad2_name,     indicator, ".qs")))
+    res_adm11 <- read_qs_safe(file.path(results_path_yr1, paste0(ad2_name_dir, indicator, ".qs")))
+    res_adm12 <- read_qs_safe(file.path(results_path_yr2, paste0(ad2_name_dir, indicator, ".qs")))
     
+    ok11 <- has_data(res_adm11)  # direct yr1
+    ok12 <- has_data(res_adm12)  # direct yr2
+    ok21 <- has_data(old)        # smoothed yr1
+    ok22 <- has_data(new)        # smoothed yr2
     
-    res_adm11=res_adm12=old=old=new=c()
-    
-    yr1=min(surveys[surveys$country==country,]$year)
-    results_path_yr1 <- file.path(source_path, middle_path ,country, yr1)
-    
-    yr2=max(surveys[surveys$country==country,]$year)
-    results_path_yr2 <- file.path(source_path, middle_path, country, yr2)
-    
-    
-    qfile_adm10 <- file.path(results_path_yr1, paste0(ad2_name, indicator, ".qs"))
-    qfile_adm20 <- file.path(results_path_yr2, paste0(ad2_name, indicator, ".qs"))
-    old <- tryCatch(qs::qread(qfile_adm10), error = function(e) { message("Failed to read ", qfile_adm10, ": ", e$message); return(NULL) })
-    new <- tryCatch(qs::qread(qfile_adm20), error = function(e) { message("Failed to read ", qfile_adm20, ": ", e$message); return(NULL) })
-    
-    
-    qfile_adm1 <- file.path(results_path_yr1, paste0(ad2_name_dir, indicator, ".qs"))
-    qfile_adm2 <- file.path(results_path_yr2, paste0(ad2_name_dir, indicator, ".qs"))
-    res_adm11 <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("Failed to read ", qfile_adm1, ": ", e$message); return(NULL) })
-    res_adm12 <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("Failed to read ", qfile_adm2, ": ", e$message); return(NULL) })
-    
-    
-    
-    
-    
-    # 
-    # old <- ad2_store[[country]][[indicator]][[as.character(yr1)]]
-    # new <- ad2_store[[country]][[indicator]][[as.character(yr2)]]
-    ok21 <- has_data(old)
-    ok22 <- has_data(new)
-    # res_adm11 <- ad2_store_direct[[country]][[indicator]][[as.character(yr1)]]
-    # res_adm12 <- ad2_store_direct[[country]][[indicator]][[as.character(yr2)]]
-    ok11 <- has_data(res_adm11)
-    ok12 <- has_data(res_adm12)
-    out1=out11=c()
+    # ---- Put everything on the same scale ----
+    # direct: direct.est in %, width = 90% CI width in percentage points
     if (ok11) {
-      
-      
-      # res_adm11$res.admin2$cv1 <-  with(res_adm11$res.admin2,
-      #                             sd / (mean * (1 - mean)))
-      
-      res_adm11$res.admin2$direct.est=res_adm11$res.admin2$direct.est*100
-      res_adm11$admin2_post=res_adm11$admin2_post*100
-      # qs11 <- apply(res_adm11$admin2_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # res_adm11$res.admin2$lower <- qs11[1, ]
-      # res_adm11$res.admin2$upper <- qs11[2, ]
-      res_adm11$res.admin2$width <-  res_adm11$res.admin2$direct.upper -  res_adm11$res.admin2$direct.lower
-      
-      
-      
-      
-      # out2 <- res_adm11$res.admin2[, c("admin2.name.full", "direct.est", "direct.se",
-      #                            "cv", "direct.lower", "direct.upper")]
-      # colnames(out2)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-      # out2$version <- yr1
-      # out2$Prevalence= out2$Prevalence*100
-      # out2$upper= out2$upper*100
-      # out2$lower= out2$lower*100
-      # out2$width <- out2$upper - out2$lower
-      
+      res_adm11$res.admin2$direct.est <-
+        res_adm11$res.admin2$direct.est * factorr
+      res_adm11$res.admin2$width <-
+        (res_adm11$res.admin2$direct.upper -
+           res_adm11$res.admin2$direct.lower) * factorr
     }
+    
     if (ok12) {
-      # new$res.admin2$cv1 <- with(new$res.admin2,
-      #                                  pmax(sd / mean, sd / (1 - mean))
-      # )
-      # res_adm12$res.admin2$cv1 <-  with(res_adm12$res.admin2,
-      #                             sd / (mean * (1 - mean)))
-      
-      res_adm12$res.admin2$direct.est=res_adm12$res.admin2$direct.est*100
-      # res_adm12$admin2_post=res_adm12$admin2_post*100
-      # qs12 <- apply(res_adm12$admin2_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # res_adm12$res.admin2$lower <- qs12[1, ]
-      # res_adm12$res.admin2$upper <- qs12[2, ]
-      res_adm12$res.admin2$width <-  res_adm12$res.admin2$direct.upper -  res_adm12$res.admin2$direct.lower
-      
-      # out22 <- res_adm12$res.admin2[, c("admin2.name.full", "direct.est", "direct.se",
-      #                                   "cv", "direct.lower", "direct.upper")]
-      # colnames(out22)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-      # out22$version <- yr2
-      # out22$Prevalence= out22$Prevalence*100
-      # out22$upper= out22$upper*100
-      # out22$lower= out22$lower*100
-      # out22$width <- out22$upper - out22$lower
-      
+      res_adm12$res.admin2$direct.est <-
+        res_adm12$res.admin2$direct.est * factorr
+      res_adm12$res.admin2$width <-
+        (res_adm12$res.admin2$direct.upper -
+           res_adm12$res.admin2$direct.lower) * factorr
     }
-    ok21 <- has_data(old)
-    ok22 <- has_data(new)
-    out2=out22=c()
+    
+    # smoothed: mean in %, width = 90% CI width in percentage points
     if (ok21) {
-      #
-      #
-      # old$res.admin2$cv1 <-  with(old$res.admin2,
-      #                             sd / (mean * (1 - mean)))
-      #
-      
-      old$res.admin2$mean=old$res.admin2$mean*100
-      # old$admin2_post=old$admin2_post*100
-      # qs11 <- apply(old$admin2_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # old$res.admin2$lower <- qs11[1, ]
-      # old$res.admin2$upper <- qs11[2, ]
-      old$res.admin2$width <-  old$res.admin2$upper -  old$res.admin2$lower
-      
-      #
-      # out2 <- old$res.admin2[, c("admin2.name.full", "mean", "sd",
-      #                            "cv", "lower", "upper")]
-      # colnames(out2)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-      # out2$version <- yr1
-      # out2$Prevalence= out2$Prevalence*100
-      # out2$upper= out2$upper*100
-      # out2$lower= out2$lower*100
-      # out2$width <- out2$upper - out2$lower
-      
+      old$res.admin2$median  <- old$res.admin2$median * factorr
+      old$res.admin2$width <- (old$res.admin2$upper -
+                                 old$res.admin2$lower) * factorr
     }
+    
     if (ok22) {
-      # new$res.admin2$cv1 <- with(new$res.admin2,
-      #                                  pmax(sd / mean, sd / (1 - mean))
-      # # )
-      # new$res.admin2$cv1 <-  with(new$res.admin2,
-      #                             sd / (mean * (1 - mean)))
-      #
-      
-      new$res.admin2$mean=new$res.admin2$mean*100
-      # new$admin2_post=new$admin2_post*100
-      # qs12 <- apply(new$admin2_post, 2, quantile,
-      #               probs = c((1 - CI) / 2, 1 - (1 - CI) / 2))
-      # new$res.admin2$lower <- qs12[1, ]
-      # new$res.admin2$upper <- qs12[2, ]
-      
-      new$res.admin2$width <-  new$res.admin2$upper -  new$res.admin2$lower
-      # out22 <- new$res.admin2[, c("admin2.name.full", "mean", "sd",
-      #                             "cv", "lower", "upper")]
-      # colnames(out22)[c(2, 3, 5, 6)] <- c("Prevalence", "sd", "lower", "upper")
-      # out22$version <- yr2
-      # out22$Prevalence= out22$Prevalence*100
-      # out22$upper= out22$upper*100
-      # out22$lower= out22$lower*100
-      # out22$width <- out22$upper - out22$lower
-      
+      new$res.admin2$median  <- new$res.admin2$median * factorr
+      new$res.admin2$width <- (new$res.admin2$upper -
+                                 new$res.admin2$lower) * factorr
     }
-    if (ok11 && ok12  && ok21 && ok22 ) {
-      # ----- both years available -----
+    
+    # ---- Build plots ----
+    if (ok11 && ok12 && ok21 && ok22) {
+      # Both years available, all models
       
-      s5 <- scatterPlot(
-        res1=res_adm11$res.admin2,
-        res2=old$res.admin2,
-        value1="direct.est",
-        value2="mean",
-        by.res1="admin2.name.full",
-        by.res2="admin2.name.full",
-        title= paste0(yr1," Prevalence"),
-        label1="Unsmoothed",
-        label2="Smoothed")
+      s5 <- scatterPlot1(
+        res1    = res_adm11$res.admin2,
+        value1  = "direct.est",
+        res2    = old$res.admin2,
+        value2  = "median",
+        by.res1 = "admin2.name.full",
+        by.res2 = "admin2.name.full",
+        title   = paste0(yr1, " ", title_prev),
+        label1  = val_xlab,
+        label2  = val_ylab
+      )
+      # grab the common range currently used by the plot
+      lim <- range(ggplot_build(s5)$data[[2]][, c("x","y")], na.rm = TRUE)
+      pad <- 0.03 * diff(lim)
+      lim <- lim + c(-pad, pad)
+      s5<-s5 +
+        coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+        scale_x_continuous(limits = lim, labels = labels_scatter) +
+        scale_y_continuous(limits = lim, labels = labels_scatter)
       
-      s6 <- scatterPlot(
-        res1=res_adm12$res.admin2,
-        res2=new$res.admin2,
-        value1="direct.est",
-        value2="mean",
-        by.res1="admin2.name.full",
-        by.res2="admin2.name.full",
-        title= paste0(yr2," Prevalence"),
-        label1="Unsmoothed",
-        label2="Smoothed")
-      
-      s55 <- scatterPlot(
-        res1=res_adm11$res.admin2,
-        res2=old$res.admin2,
-        value1="width",
-        value2="width",
-        by.res1="admin2.name.full",
-        by.res2="admin2.name.full",
-        title= paste0(yr1," 90% CI width"),
-        label1="Unsmoothed",
-        label2="Smoothed")
-      
-      s66 <- scatterPlot(
-        res1=res_adm12$res.admin2,
-        res2=new$res.admin2,
-        value1="width",
-        value2="width",
-        by.res1="admin2.name.full",
-        by.res2="admin2.name.full",
-        title= paste0(yr2," 90% CI width"),
-        label1="Unsmoothed",
-        label2="Smoothed")
+      s6 <- scatterPlot1(
+        res1    = res_adm12$res.admin2,
+        value1  = "direct.est",
+        res2    = new$res.admin2,
+        value2  = "median",
+        by.res1 = "admin2.name.full",
+        by.res2 = "admin2.name.full",
+        title   = paste0(yr2, " ", title_prev),
+        label1  = val_xlab,
+        label2  = val_ylab
+      )
+      # grab the common range currently used by the plot
+      lim <- range(ggplot_build(s6)$data[[2]][, c("x","y")], na.rm = TRUE)
+      pad <- 0.03 * diff(lim)
+      lim <- lim + c(-pad, pad)
+      s6<-s6 +
+        coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+        scale_x_continuous(limits = lim, labels = labels_scatter) +
+        scale_y_continuous(limits = lim, labels = labels_scatter)
       
       
+      s55 <- scatterPlot1(
+        res1    = res_adm11$res.admin2,
+        value1  = "width",
+        res2    = old$res.admin2,
+        value2  = "width",
+        by.res1 = "admin2.name.full",
+        by.res2 = "admin2.name.full",
+        title   = paste0(yr1, " ", title_width),
+        label1  = width_xlab,
+        label2  = width_ylab
+      )
+      # grab the common range currently used by the plot
+      lim <- range(ggplot_build(s55)$data[[2]][, c("x","y")], na.rm = TRUE)
+      pad <- 0.03 * diff(lim)
+      lim <- lim + c(-pad, pad)
+      s55<-s55 +
+        coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+        scale_x_continuous(limits = lim, labels = labels_scatter) +
+        scale_y_continuous(limits = lim, labels = labels_scatter)
       
-      scatter= (s5+ s6 ) /(s55+s66)
+      s66 <- scatterPlot1(
+        res1    = res_adm12$res.admin2,
+        value1  = "width",
+        res2    = new$res.admin2,
+        value2  = "width",
+        by.res1 = "admin2.name.full",
+        by.res2 = "admin2.name.full",
+        title   = paste0(yr2, " ", title_width),
+        label1  = width_xlab,
+        label2  = width_ylab
+      )
+      # grab the common range currently used by the plot
+      lim <- range(ggplot_build(s66)$data[[2]][, c("x","y")], na.rm = TRUE)
+      pad <- 0.03 * diff(lim)
+      lim <- lim + c(-pad, pad)
+      s66<-s66 +
+        coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+        scale_x_continuous(limits = lim, labels = labels_scatter) +
+        scale_y_continuous(limits = lim, labels = labels_scatter)
       
       
       
-      
-      
+      scatter <- (s5 + s6) / (s55 + s66)
       
     } else {
-      # ----- at least one year missing -----
-      # ----- compute metrics only when present -----
+      # At least one year missing – use placeholders where needed
       
-      
-      
-      # Prevalence
-      g1_left <- if (ok11&ok21) {
+      g1_left <- if (ok11 && ok21) {
+        s5 <- scatterPlot1(
+          res1    = res_adm11$res.admin2,
+          value1  = "direct.est",
+          res2    = old$res.admin2,
+          value2  = "median",
+          by.res1 = "admin2.name.full",
+          by.res2 = "admin2.name.full",
+          title   = paste0(yr1, " ", title_prev),
+          label1  = val_xlab,
+          label2  = val_ylab
+        )
+        # grab the common range currently used by the plot
+        lim <- range(ggplot_build(s5)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s5<-s5 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
         
         
-        s5 <- scatterPlot(
-          res1=res_adm11$res.admin2,
-          res2=old$res.admin2,
-          value1="direct.est",
-          value2="mean",
-          by.res1="admin2.name.full",
-          by.res2="admin2.name.full",
-          title= paste0(yr1," Prevalence"),
-          label1="Unsmoothed",
-          label2="Smoothed")
+        s55 <- scatterPlot1(
+          res1    = res_adm11$res.admin2,
+          value1  = "width",
+          res2    = old$res.admin2,
+          value2  = "width",
+          by.res1 = "admin2.name.full",
+          by.res2 = "admin2.name.full",
+          title   = paste0(yr1, " ", title_width),
+          label1  = width_xlab,
+          label2  = width_ylab
+        )
+        lim <- range(ggplot_build(s55)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s55<-s55 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
         
         
-        
-        s55 <- scatterPlot(
-          res1=res_adm11$res.admin2,
-          res2=old$res.admin2,
-          value1="width",
-          value2="width",
-          by.res1="admin2.name.full",
-          by.res2="admin2.name.full",
-          title= paste0(yr1," 90% CI width"),
-          label1="Unsmoothed",
-          label2="Smoothed")
-        
-        
-        s5/s55
-        
+        s5 / s55
       } else {
         make_placeholder(yr1, "Scatter")
       }
       
-      g1_right <- if (ok12&ok22){
+      g1_right <- if (ok12 && ok22) {
+        s6 <- scatterPlot1(
+          res1    = res_adm12$res.admin2,
+          value1  = "direct.est",
+          res2    = new$res.admin2,
+          value2  = "median",
+          by.res1 = "admin2.name.full",
+          by.res2 = "admin2.name.full",
+          title   = paste0(yr2, " ", title_prev),
+          label1  = val_xlab,
+          label2  = val_ylab
+        )
+        lim <- range(ggplot_build(s6)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s6<-s6 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
         
-        s6 <- scatterPlot(
-          res1=res_adm12$res.admin2,
-          res2=new$res.admin2,
-          value1="direct.est",
-          value2="mean",
-          by.res1="admin2.name.full",
-          by.res2="admin2.name.full",
-          title= paste0(yr2," Prevalence"),
-          label1="Unsmoothed",
-          label2="Smoothed")
+        s66 <- scatterPlot1(
+          res1    = res_adm12$res.admin2,
+          value1  = "width",
+          res2    = new$res.admin2,
+          value2  = "width",
+          by.res1 = "admin2.name.full",
+          by.res2 = "admin2.name.full",
+          title   = paste0(yr2, " ", title_width),
+          label1  = width_xlab,
+          label2  = width_ylab
+        )
+        lim <- range(ggplot_build(s66)$data[[2]][, c("x","y")], na.rm = TRUE)
+        pad <- 0.03 * diff(lim)
+        lim <- lim + c(-pad, pad)
+        s66<-s66 +
+          coord_equal(xlim = lim, ylim = lim, expand = FALSE) +
+          scale_x_continuous(limits = lim, labels = labels_scatter) +
+          scale_y_continuous(limits = lim, labels = labels_scatter)
         
-        
-        
-        s66 <- scatterPlot(
-          res1=res_adm12$res.admin2,
-          res2=new$res.admin2,
-          value1="width",
-          value2="width",
-          by.res1="admin2.name.full",
-          by.res2="admin2.name.full",
-          title= paste0(yr2," 90% CI width"),
-          label1="Unsmoothed",
-          label2="Smoothed")
-        
-        s6/s66
+        s6 / s66
       } else {
         make_placeholder(yr2, "Scatter")
       }
       
-      scatter=g1_left|g1_right
-      
+      scatter <- g1_left | g1_right
     }
     
-    
-    
-    ggsave(scatter,
-           filename = file.path(plot_path_c, paste0("scatter-", indicator, ".png")),
-           width = 10, height = 10, dpi = 300)
-    
-    
-    
-    
-    
+    # ---- Save plot ----
+    ggsave(
+      filename = file.path(plot_path_c, paste0("scatter-", indicator, ".png")),
+      plot     = scatter,
+      width    = 10,
+      height   = 10,
+      dpi      = dpi
+    )
   }
 }
 
