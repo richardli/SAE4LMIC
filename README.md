@@ -1,5 +1,13 @@
 # Code repository for SAE4LMIC Dashboard 
 
+This code repository contains codes needed to generate the input to the website at [https://sae4lmic.stat.uw.edu/](https://sae4lmic.stat.uw.edu/). 
+
+To re-create the website locally, you will need the following
+1. The data structure described in the next section. 
+2. The codes in this repository to generate static and interactive plots, as well as reports. 
+3. The codes in the [website repository](https://github.com/UW-Statistics/gatesweb) to deploy the website (locally or through Github Action)
+4. Optionally, for websites with many large HTML files, you may need to store the source files in more than one repository to allow Github Action to properly build the website. See the [webplots folder](webplots/) for details.
+
 ## Repository structure
 
 This code repository assumes the following directory structures
@@ -12,24 +20,18 @@ This code repository assumes the following directory structures
   - `reports` PDF reports on the website
   - `estimates` CSV of final estimates on the website
   - `ReportPlots` static plots for the report
-  - `ShinyPlots` HTML and static plots to be passed to website 
+  - `ShinyPlots1` First batch of HTML plots to be passed to website 
+  - `ShinyPlots2` Second batch of HTML plots to be passed to website 
+  - `StaticWebPlots` Static plots to be passed to website 
 - `SAE4LMIC` **(This repository)**
-  - `reports` RMD files for generating reports
+  - `info` Meta data and list of surveys
+  - `prep` R scripts to prepare datasets
+  - `report` RMD files for generating reports
   - `models` R scripts to fit the final models on the website
   - `plots` R scripts to generate files in `../Gates-results/ReportPlots
-  - `shinyplots` R scripts to generate files in `../Gates-results/ShinyPlots`
+  - `webplots` R scripts to generate files in `../Gates-results/ShinyPlots`
   - `misc` additional R scripts to diagnose, evaluate, or compare models
 
-## Instructions for contributors
-1. Clone this repository and organize your local project folder as above.
-2. 
-
-## Steps to carry out analysis
-1. Make sure the local folder structure is set up the same as described above. 
-2. Run ... to fit model for a country or indicator
-3. Run ... to generate figures for report
-4. Run ... to generate PDF report
-5. Run ... to generate plots for the website
 
 ## Administrator tasks
 
@@ -46,9 +48,7 @@ This code repository assumes the following directory structures
 ### Adding new surveys
 1. Update `info/surveylist.csv` and `info/shapefilelist.csv`
 2. Follow `prep/README.md` to update the directory and binary data files
-3. Check consistency in country information using ...
-4. Check consistency with API using ...
+3. Check consistency in country information  
+4. Check consistency with API 
 
-## Detailed folder structures
-
-TODO: explain within the folders how things are organized
+ 
