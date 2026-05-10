@@ -1,3 +1,5 @@
 *.pdf
 *.png
 *.html
+.DS_Store
+**/.DS_Store
