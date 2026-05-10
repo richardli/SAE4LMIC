@@ -167,7 +167,17 @@ get_dhs_filenames <- function(country, year) {
     krname <- "ZMKR81DT/ZMKR81FL.DTA"
     prname <- "ZMPR81DT/ZMPR81FL.DTA"
     brname <- "ZMBR81DT/ZMBR81FL.DTA"
-  }   else {
+  }   else if (country == "Malawi" & year == 2015) {
+    irname <- "MWIR81DT/MWIR7AFL.DTA"
+    krname <- "MWKR81DT/MWKR7AFL.DTA"
+    prname <- "MWPR81DT/MWPR7AFL.DTA"
+    brname <- "MWBR81DT/MWBR7AFL.DTA"
+  }else if (country == "Malawi" & year == 2024) {
+    irname <- "MWIR81DT/MWIR81FL.DTA"
+    krname <- "MWKR81DT/MWKR81FL.DTA"
+    prname <- "MWPR81DT/MWPR81FL.DTA"
+    brname <- "MWBR81DT/MWBR81FL.DTA"
+  } else {
     stop("No match found for this country and year.")
   }
 

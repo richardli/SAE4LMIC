@@ -768,7 +768,7 @@ for (indicator in indicatorlist ) {
 
     
     out1 <- old$res.admin2[, c("admin2.name.full", "median", "sd",
-                                "lower", "upper", "cv2")]
+                                "lower", "upper", "cv")]
     colnames(out1)[c(2)] <- c("Prevalence")
     out1$version <- yr1
 
@@ -783,7 +783,7 @@ for (indicator in indicatorlist ) {
   
     
     out11 <- new$res.admin2[, c("admin2.name.full", "median", "sd",
-                                 "lower", "upper", "cv2")]
+                                 "lower", "upper", "cv")]
     colnames(out11)[c(2)] <- c("Prevalence")
     out11$version <- yr2
 
@@ -947,10 +947,14 @@ for (indicator in indicatorlist ) {
     g5 <-   g5_left |   g5_right
     
     
+  
     
     
   }
   
+  if (country == "Malawi") {
+    g5 <- g5 + theme(strip.text = element_text(size = 7))
+  }
   final_plot <- (g1 / g4/ g5) + plot_layout(heights = c(1,1,1))
   
   # stack the four rows
@@ -970,7 +974,7 @@ for (indicator in indicatorlist ) {
 
 # ad1_name<-"new_res_adm1-"
 # results_path<-file.path(source_path, "Gates-results/Results", country, yr1)
-# load(file.path(results_path, "basic.Rdata"))
+load(file.path(results_path, "basic.Rdata"))
 poly.adm1 <- ms_simplify(poly.adm1, keep = 0.1, keep_shapes = TRUE)  # keep ~10% of vertices
 
 tab2<-save_tab2_from_files(country,adm_name =adm_name,infolist$ID)
@@ -1246,7 +1250,10 @@ for (indicator in indicatorlist ) {
     }
     g5 <-   g5_left |   g5_right
     
+    # right before this existing line:
+    # final_plot <- (g1 / g4/ g5) + plot_layout(heights = c(1,1,1))
     
+   
     
     
   }
@@ -1255,6 +1262,9 @@ for (indicator in indicatorlist ) {
   
   # final_plot_t <- (g1/ g4/ g5/ g23) + plot_layout(heights = c(1,1,1,1))
   # 
+  if (country == "Malawi") {
+    g5 <- g5 + theme(strip.text = element_text(size = 7))
+  }
   
   final_plot <- (g1/ g4/ g5) + plot_layout(heights = c(1,1,1))
   
@@ -1461,8 +1471,17 @@ savemaps_ridge(country="Burkina Faso",
                plot_path_c=file.path(source_path,"Gates-results/ReportPlots","Burkina Faso"))
 
 
+savemaps_ridge(country="Malawi",
+               ad2_name="FH_adm2_fix_nest-",
+               ad1_name="res_adm1-",
+               indicatorlist =indicatorlist,
+               adm_name = "res_adm0-",
+               middle_path="Gates-results/Results",
+               plot_path_c=file.path(source_path,"Gates-results/ReportPlots","Malawi"))
 
-countryList <- unique(surveys$country)
+
+
+countryList <- "Malawi"
 for (ctry in countryList) {
   message("Processing: ", ctry)
   try(savemaps(ctry), silent = TRUE)

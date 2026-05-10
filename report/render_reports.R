@@ -44,3 +44,25 @@ for (cty in countrylist1) {
   )
 }
 
+
+
+countrylist1=c("Burkina Faso")
+
+for (cty in countrylist1) {
+  message("Rendering report for: ", cty)
+  render(
+    input  = "/Users/qianyu/Dropbox/binary_code/pcg/GATES/Gates-results/Reports/report_short.Rmd", 
+    output_format = "bookdown::pdf_book",
+    params = list(
+      country     = cty,
+      source_path = "/Users/qianyu/Dropbox/binary_code/pcg/GATES",
+      middle_path = "Gates-results/ReportPlots"
+    ),
+    output_file = paste0("Mini-Multi-Indicator-SAE-", cty, ".pdf"),
+    # output_dir  = output_dir,   
+    # clean = FALSE,   
+    envir  = new.env()
+  )
+}
+
+

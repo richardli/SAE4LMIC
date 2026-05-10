@@ -94,6 +94,14 @@ save_tab1 <- function(country,
 
 
 
+save_tab1(
+  country     = "Malawi",
+  adm_name<-"res_adm0-",
+  ids=infolist$ID,
+  middle_path="Gates-results/Results",
+  out_middle="Gates-results/estimates"
+)
+
 
 
 save_tab1(
@@ -198,6 +206,14 @@ save_tab3 <- function(country,
   
   invisible(tab3)
 }
+
+save_tab3(
+  country    = "Malawi",
+  ad2_name = "res_adm2_fix-",
+  ids=infolist$ID,
+  middle_path="Gates-results/Results",
+  out_middle="Gates-results/estimates"
+)
 
 
 save_tab3(
@@ -328,6 +344,15 @@ save_tab456 <- function(country,
   invisible(tab_events)
   invisible(tab_samples)
 }
+
+
+save_tab456(
+  country = "Malawi",
+  adm_name<-"res_adm0-",
+  ids=infolist$ID,
+  middle_path="Gates-results/Results",
+  out_middle="Gates-results/estimates"
+)
 
 save_tab456(
   country = "Burkina Faso",

@@ -68,7 +68,7 @@ countryList= unique(surveys$country)
 indicatorlist=infolist$ID
 
 
-for (i in 23 ) { #seq_len(nrow(surveys)) which(surveys$country %in% countryList)
+for (i in 26 ) { #seq_len(nrow(surveys)) which(surveys$country %in% countryList)
 
   summary_df<-c()
   res_data_ad0<-list()
@@ -115,7 +115,8 @@ for (i in 23 ) { #seq_len(nrow(surveys)) which(surveys$country %in% countryList)
                                                  "MZ2022DHS",
                                                  "SN2023DHS",
                                                  "ML2023DHS",
-                                                 "ZM2024DHS") ){
+                                                 "ZM2024DHS",
+                                                 "MW2024DHS") ){
 
         nonngo <-tmp_res$Value[
           which(

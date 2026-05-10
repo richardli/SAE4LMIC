@@ -229,7 +229,7 @@ for (indicator in indicatorlist) {
 
 
 saveclustermap(
-  country= "Nigeria",
+  country= "Malawi",
   middle_path="Gates-results/Results",
   plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country),
   indicatorlist =infolist$ID  

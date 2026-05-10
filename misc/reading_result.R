@@ -12,9 +12,10 @@ source_path <- dirname(here::here())
 git_path <- here::here()
 source(here(git_path, "prep/prepare_functions.R"))
 
+
 read_two_model_result<-function(ad1_name, ad2_name, country){
   
-
+  res=list()
   infolist <- read.csv(file.path(git_path, "info", "infolist.csv"))
   surveys  <- read.csv(file.path(git_path, "info", "surveyslist.csv"))
   
@@ -22,7 +23,7 @@ read_two_model_result<-function(ad1_name, ad2_name, country){
     
 
 
-  country       <- surveys$country[i]
+    ctry=country       <- surveys$country[i]
   year          <- surveys$year[i]
   year_key      <- as.character(year)           
   version       <- surveys$version[i]
@@ -65,10 +66,11 @@ read_two_model_result<-function(ad1_name, ad2_name, country){
 tesr<-read_two_model_result(
   ad1_name="new_res_adm1-",
   ad2_name="new_FH_adm2_fix_nest-",
-  country="Nigeira"
+  country="Burkina Faso" 
 )
 
 
+posterior_ridge_plot(tesr$BFA$'2021'$FP_CUSM_W_MOD$adm1, palette = viridisLite::viridis(10))
 
 
 

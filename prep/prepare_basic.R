@@ -49,7 +49,9 @@ countryList=c("Burkina Faso" ,
               # 11/2025 new countries
               "Mali",
               "Zambia",
-              "South Africa")
+              "South Africa",
+              #04/2026 new countries
+              "Malawi")
 
 #------------------------------------------------------------------#
 # Step 1.1
@@ -58,10 +60,10 @@ countryList=c("Burkina Faso" ,
 #------------------------------------------------------------------#
 
 ## Admin note: replace with only a subset of countries when updating
-country <- "Zamnia"
+country <- "Malawi"
 
 #which(surveys$country %in% country)
-for (i in 23 ) {
+for (i in 26:27 ) {
   row <- surveys[i, ]
   country <- as.character(row$country)
   year <- as.character(row$year)
@@ -70,15 +72,8 @@ for (i in 23 ) {
   country_short<-row$country_short
 
   
-  
-  
   # if (country=="Rwanda"&year==2014){year=2015}
   # API0_PATH= paste0(source_path,"Gates-data/API/admin0/",country_short,"_",year,"_DHS_est.rda")
-  # load(API0_PATH)
-  
- 
-  
-  
 
   # per-survey results path
   data_path <- file.path(source_path, "Gates-data")
@@ -120,7 +115,7 @@ for (i in 23 ) {
       
       
       
-    } else{
+    }else {
       
       iso3 <- countrycode(country, origin = "country.name", destination = "iso3c")
       p_adm1 <- surveyPrev:::get_geoBoundaries(iso3, adm = "ADM1")
@@ -158,6 +153,16 @@ for (i in 23 ) {
     file_path_geo <- file.path(data_path, "rawDHS", country, year, geoname, paste0(geoname, ".shp"))
     geo <- sf::st_read(file_path_geo, quiet = TRUE)
 
+    
+    if(i==26){ #Malawi 2024 remove Dowa (Camps)
+      
+      
+      geo <- geo %>% filter(ADM1NAME != "Dowa (Camps)")
+      
+      
+      }
+    
+    
     cluster.info <- surveyPrev::clusterInfo(geo = geo,
                                 poly.adm1 = poly.adm1,
                                 poly.adm2 = poly.adm2,

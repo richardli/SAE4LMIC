@@ -57,7 +57,7 @@ countrylist=unique(surveys$country)
 
 
 
-for (country in countrylist[-2]){ 
+for (country in country){ 
   plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country)
   # 
   save_tab1(

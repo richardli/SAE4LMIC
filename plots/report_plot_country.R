@@ -45,10 +45,10 @@ middle_path="Gates-results/Results"
 out_middle="Gates-results/estimates"
 
 #model names 
-adm_name<-"new_res_adm0-"
-ad2_name="new_FH_adm2_fix_nest-"
-ad1_name="new_res_adm1-"
-ad2_name_dir=  "new_res_adm2_fix-"
+adm_name<-"res_adm0-"
+ad2_name="FH_adm2_fix_nest-"
+ad1_name="res_adm1-"
+ad2_name_dir=  "res_adm2_fix-"
 
 # plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country)
 
@@ -66,7 +66,7 @@ countrylist= c(
 # indicatorlist=c("CO_MOBB_W_MOB","ML_NETC_C_ITN","CH_DIAT_C_ORT","RH_PCCT_C_DY2","CH_VACC_C_MSL","ED_EDUC_W_SEH")
 
 
-countrylist=c( "Burkina Faso")
+countrylist=c( "Malawi")
 countrylist=unique(surveys$country)
 
 start <- proc.time()

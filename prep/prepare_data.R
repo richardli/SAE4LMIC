@@ -78,12 +78,12 @@ countryList=c("Zambia",
 
 
 
-indicatorlist="RH_DELA_C_SKP"
+indicatorlist=c("RH_DELP_C_DHT","RH_DELP_C_PRT")
 countryList=c("Mali","Senegal")
 
 
 #which(surveys$country %in% countryList
-for (i in 23 ) {
+for (i in 26 ) {
 
 
 

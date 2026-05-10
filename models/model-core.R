@@ -32,7 +32,7 @@ for (i in which(surveys$country %in% country_to_run)){
       ##
       ##  Countries with alternative strata
       ##
-      if (country == "Rwanda" |
+      if (country == "Rwanda" |country == "Malawi" |
           (country == "Tanzania" && year == 2015) |
           (country == "Mali" && year == 2023) |
           country == "Sierra Leone") {
@@ -198,7 +198,7 @@ for (i in which(surveys$country %in% country_to_run)) { #seq_len(nrow(surveys))
       
   
       
-      if (country == "Rwanda" |
+      if (country == "Rwanda" |country == "Malawi" |
           (country == "Tanzania" && year == 2015) |
           (country == "Mali" && year == 2023) |
           country == "Sierra Leone"){

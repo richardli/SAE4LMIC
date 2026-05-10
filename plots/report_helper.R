@@ -1029,7 +1029,7 @@ savemaps_ridge<-function(country="Nigeria",
       
       
       out1 <- old$res.admin2[, c("admin2.name.full", "median", "sd",
-                                 "lower", "upper", "cv2")]
+                                 "lower", "upper", "cv")]
       colnames(out1)[c(2)] <- c("Prevalence")
       out1$version <- yr1
       
@@ -1044,7 +1044,7 @@ savemaps_ridge<-function(country="Nigeria",
       
       
       out11 <- new$res.admin2[, c("admin2.name.full", "median", "sd",
-                                  "lower", "upper", "cv2")]
+                                  "lower", "upper", "cv")]
       colnames(out11)[c(2)] <- c("Prevalence")
       out11$version <- yr2
       

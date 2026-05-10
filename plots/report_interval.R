@@ -1,3 +1,4 @@
+library(RColorBrewer)
 
 library(dplyr)
 intevalplot1=intervalplot1<-function (admin = 0, compare = FALSE, model = NULL, group = FALSE,
@@ -285,7 +286,7 @@ intevalplot1=intervalplot1<-function (admin = 0, compare = FALSE, model = NULL, 
 
 
 
-country="Nigeria"
+country="Malawi"
 
 
 indicatorlist=infolist$ID
@@ -293,7 +294,7 @@ indicatorlist=infolist$ID
   
   
 saveinterval_overlay<-function( 
-    country="Nigeria",
+    country="Malawi",
     ad1_name="new_res_adm1-",
     ad2_name="new_FH_adm2_fix_nest-",
     indicatorlist =infolist$ID,
@@ -804,9 +805,9 @@ for(country in country){
  
   
  saveinterval_overlay(country=country,
-          ad2_name="new_FH_adm2_fix_nest-",
-          ad1_name="new_res_adm1-",
-          indicatorlist =infolist$ID[18],
+          ad2_name="FH_adm2_fix_nest-",
+          ad1_name="res_adm1-",
+          indicatorlist =indicatorlist,
           middle_path="Gates-results/Results",
           plot_path_c=file.path(source_path,"Gates-results/ReportPlots",country))
  
@@ -817,7 +818,7 @@ for(country in country){
  
  
  
- saveinterval_overlay(country="Ethiopia",
+ saveinterval_overlay(country=country,
                       ad2_name="new_FH_adm2_fix_nest-",
                       ad1_name="new_res_adm1-",
                       indicatorlist ="ML_NETC_C_ITN",
