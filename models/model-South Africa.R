@@ -22,7 +22,7 @@ for (indicator_to_run in indicatorlist) {
 ## ---------------------------- check results ------------------------------##
 ## -------------------------------------------------------------------------##
 
-source(here(git_path, "misc", "check-modelresult.R"))
+source(here(git_path, "check", "check-modelresult.R"))
 
 check_tab <- check_model_results(
   country_to_run = country_to_run,

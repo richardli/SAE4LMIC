@@ -122,10 +122,10 @@ savescatter <- function(
     width_ylab <- "Smoothed"
     
     # ---- Load results ----
-    old       <- read_qs_safe(file.path(results_path_yr1, paste0(ad2_name,     indicator, ".qs")))
-    new       <- read_qs_safe(file.path(results_path_yr2, paste0(ad2_name,     indicator, ".qs")))
-    res_adm11 <- read_qs_safe(file.path(results_path_yr1, paste0(ad2_name_dir, indicator, ".qs")))
-    res_adm12 <- read_qs_safe(file.path(results_path_yr2, paste0(ad2_name_dir, indicator, ".qs")))
+    old       <- read_qs_safe(resolve_qs(results_path_yr1, ad2_name, indicator))
+    new       <- read_qs_safe(resolve_qs(results_path_yr2, ad2_name, indicator))
+    res_adm11 <- read_qs_safe(resolve_qs(results_path_yr1, ad2_name_dir, indicator))
+    res_adm12 <- read_qs_safe(resolve_qs(results_path_yr2, ad2_name_dir, indicator))
     
     ok11 <- has_data(res_adm11)  # direct yr1
     ok12 <- has_data(res_adm12)  # direct yr2

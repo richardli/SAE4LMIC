@@ -1,6 +1,8 @@
 #
-# This script sets the directories needed for the workflow for all countries & surveys
-# When a new survey/indicator is added, this script needs to be rerun
+# This script sets the directories needed for the workflow.
+# When a new survey/indicator is added, rerun this script SCOPED to that survey
+# (see the countryList/yearList selector below) so it does not create empty
+# folders for countries whose results you do not have locally.
 #
 
 # The following set wd to be e.g.
@@ -16,11 +18,29 @@ infolist <- read.csv(here(git_path, "info", "infolist.csv"))
 surveys <- read.csv(here(git_path,  "info", "surveyslist.csv"))
 
 
-project_root <- rprojroot::find_root(rprojroot::is_here)
+# --------------------------------------------------------------------------
+# Subset: which surveys to create folders for.
+#   full list  : countryList <- unique(surveys$country); yearList <- NULL
+#   new survey : countryList <- "Ethiopia";              yearList <- 2024
+# yearList = NULL means all years for the listed countries.
+# --------------------------------------------------------------------------
+# Pick ONE of the two options below:
+
+# Option A — ALL countries/surveys (default)
+countryList <- unique(surveys$country)
+yearList    <- NULL
+
+# Option B — ONE country (optionally one year). To use, comment out Option A
+# above and uncomment the two lines below. Set yearList <- NULL for all years.
+countryList <- "Ethiopia"
+yearList    <- 2024
+
+sel <- which(surveys$country %in% countryList &
+             (if (is.null(yearList)) TRUE else surveys$year %in% yearList))
 
 
 #make result folders
-for (i in seq_len(nrow(surveys))) {
+for (i in sel) {
   row <- surveys[i, ]
   country <- as.character(row$country)
   year <- as.character(row$year)
@@ -35,7 +55,7 @@ for (i in seq_len(nrow(surveys))) {
 
 
 #make estimates folders
-for (i in seq_len(nrow(surveys))) {
+for (i in sel) {
   row <- surveys[i, ]
   country <- as.character(row$country)
   year <- as.character(row$year)
@@ -50,7 +70,7 @@ for (i in seq_len(nrow(surveys))) {
 
 
 #make Report Plots folders
-for (i in seq_len(nrow(surveys))) {
+for (i in sel) {
   row <- surveys[i, ]
   country <- as.character(row$country)
   year <- as.character(row$year)
@@ -66,7 +86,7 @@ for (i in seq_len(nrow(surveys))) {
 
 
 #make check folders
-for (i in seq_len(nrow(surveys))) {
+for (i in sel) {
   row <- surveys[i, ]
   country <- as.character(row$country)
   year <- as.character(row$year)
@@ -81,7 +101,7 @@ for (i in seq_len(nrow(surveys))) {
 
 
 #make WEB folders
-for (i in seq_len(nrow(surveys))) {
+for (i in sel) {
   row <- surveys[i, ]
   country <- as.character(row$country)
   year <- as.character(row$year)

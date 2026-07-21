@@ -1,0 +1,29 @@
+country,year,survey_name,core_script,prefix,completion_date
+Nigeria,2024,NG2024DHS,model-core-newvarfix.R,new_,
+Nigeria,2018,NG2018DHS,model-core-newvarfix.R,new_,
+Burkina Faso,2021,BF2021DHS,model-core-newvarfix.R,new_,2025-11-17
+Burkina Faso,2010,BF2010DHS,model-core-newvarfix.R,new_,2025-11-17
+Congo Democratic Republic,2023,CD2023DHS,model-core-newvarfix.R,new_,
+Congo Democratic Republic,2013,CD2013DHS,model-core-newvarfix.R,new_,
+Ethiopia,2024,ET2024DHS,model-core.R,NA,
+Ethiopia,2019,ET2019DHS,model-core-newvarfix.R,new_,2025-11-18
+Ethiopia,2016,ET2016DHS,model-core-newvarfix.R,new_,2025-11-18
+Kenya,2022,KE2022DHS,model-core-newvarfix.R,new_,
+Kenya,2014,KE2014DHS,model-core-newvarfix.R,new_,
+Mozambique,2022,MZ2022DHS,model-core-newvarfix.R,new_,
+Mozambique,2011,MZ2011DHS,model-core-newvarfix.R,new_,
+Rwanda,2019,RW2019DHS,model-core-newvarfix.R,new_,
+Rwanda,2014,RW2015DHS,model-core-newvarfix.R,new_,
+Senegal,2019,SN2019DHS,model-core-newvarfix.R,new_,
+Senegal,2023,SN2023DHS,model-core-newvarfix.R,new_,
+South Africa,2016,ZA2016DHS,model-core-newvarfix.R,new_,
+Tanzania,2015,TZ2015DHS,model-core-newvarfix.R,new_,
+Tanzania,2022,TZ2022DHS,model-core-newvarfix.R,new_,
+Mali,2018,ML2018DHS,model-core-newvarfix.R,new_,
+Mali,2023,ML2023DHS,model-core-newvarfix.R,new_,
+Zambia,2018,ZM2018DHS,model-core-newvarfix.R,new_,
+Zambia,2024,ZM2024DHS,model-core-newvarfix.R,new_,
+Sierra Leone,2013,SL2013DHS,model-core-newvarfix.R,new_,
+Sierra Leone,2019,SL2019DHS,model-core-newvarfix.R,new_,
+Malawi,2024,MW2024DHS,model-core.R,NA,2026-05-08
+Malawi,2015,MW2015DHS,model-core.R,NA,2026-05-08

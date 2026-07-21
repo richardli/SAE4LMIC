@@ -60,6 +60,12 @@ get_dhs_filenames <- function(country, year) {
     prname <- "CDPR61DT/CDPR61FL.DTA"
     brname <- "CDBR61DT/CDBR61FL.DTA"
 
+  } else if (country == "Ethiopia" & year == 2024) {
+    irname <- "ETIR8ADT/ETIR8AFL.dta"
+    krname <- "ETKR8ADT/ETKR8AFL.dta"
+    prname <- "ETPR8ADT/ETPR8AFL.dta"
+    brname <- "ETBR8ADT/ETBR8AFL.dta"
+
   } else if (country == "Ethiopia" & year == 2019) {
     irname <- "ETIR81DT/ETIR81FL.DTA"
     krname <- "ETKR81DT/ETKR81FL.DTA"

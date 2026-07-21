@@ -14,9 +14,11 @@ header-includes:
   - '\usepackage{caption}'
   - '\captionsetup[table]{position=bottom}'
 params:
-  country: "Nigeria" 
+  country: "Nigeria"
   source_path: "/Users/qianyu/Dropbox/binary_code/pcg/GATES"
   middle_path: "Gates-results/ReportPlots"
+  yr1: null
+  yr2: null
 ---
 \clearpage
 
@@ -64,8 +66,10 @@ shapeused<- read.csv(file.path(git_path,  "info", "shapefileList.csv"))
 
 ```{r}
 
-yr1=min(shapeused[shapeused$country==country,]$year)
-yr2=max(shapeused[shapeused$country==country,]$year)
+# old/new survey years: use params$yr1 / params$yr2 if supplied, else min/max
+yrs_all <- sort(unique(shapeused[shapeused$country==country,]$year))
+yr1 <- if (!is.null(params$yr1)) params$yr1 else min(yrs_all)
+yr2 <- if (!is.null(params$yr2)) params$yr2 else max(yrs_all)
 
 
 c1=shapeused[shapeused$country==country& shapeused$year==yr1,]$n_geo_cluster
@@ -135,7 +139,7 @@ get_image_files2 <- function(image_dir,
 
 ```{r}
 image_dir <- normalizePath(
-  file.path(source_path, middle_path, params$country),
+  file.path(source_path, middle_path, params$country, paste0(yr1, "-", yr2)),
   winslash = "/", mustWork = TRUE
 )
 
@@ -328,7 +332,7 @@ DHS surveys included `r c1 ` clusters in `r yr1` and `r c2 ` clusters in `r yr2`
 # infolist=left_join(infolist,topic, by="ID" )
 # 
 # 
-tab3=read.csv(file.path(source_path,"Gates-results/estimates", country, "National3.csv"))
+tab3=read.csv(file.path(source_path,"Gates-results/estimates", country, paste0(yr1, "-", yr2), "National3.csv"))
 # 
 # tab=read.csv(file.path(source_path,"Gates-results/estimates", country, "National.csv"))
 # 
@@ -381,7 +385,7 @@ tab3=read.csv(file.path(source_path,"Gates-results/estimates", country, "Nationa
 
 ```{r,eval=T , echo=FALSE, results='asis'}
 
-tab=read.csv(file.path(source_path,"Gates-results/estimates", country, "National.csv"))
+tab=read.csv(file.path(source_path,"Gates-results/estimates", country, paste0(yr1, "-", yr2), "National.csv"))
 tab[5,3]<-tab[5,3]*10
 tab[5,2]<-tab[5,2]*10
 tab <- tab %>%

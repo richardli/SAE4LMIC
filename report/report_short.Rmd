@@ -38,9 +38,9 @@ library(survey)
 library(rdhs)
 library(ggplot2)
 library(patchwork)
-library(kableExtra)
 library(dplyr)
 library(tidyr)
+library(kableExtra)
 library(terra)
 library(raster)
 library(surveyPrev)
@@ -139,7 +139,6 @@ image_dir <- normalizePath(
   winslash = "/", mustWork = TRUE
 )
 
-# ad1 maps: needs special ordering by infolist$ID
 files   <- get_image_files(
   image_dir   = image_dir,
   pattern     = "^ad1_map_.*\\.png$",
@@ -147,7 +146,6 @@ files   <- get_image_files(
   prefix      = "ad1_map_"
 )
 
-# everything else: just sorted list.files
 
 files_2 <- get_image_files(
   image_dir = image_dir,
@@ -206,83 +204,6 @@ files_yr2 <- get_image_files2(
 ```
 
 
-```{r, eval=FALSE}
-
-image_dir <- normalizePath(file.path(source_path, middle_path, params$country),
-                           winslash = "/", mustWork = TRUE)
-
-
-
-
-files <- sort(list.files(path = image_dir,
-                         pattern = "^ad1_map_.*\\.png$",
-                         full.names = TRUE,
-                         recursive = FALSE))
-file_ids <- sub("^ad1_map_(.*)\\.png$", "\\1", basename(files))
-indicator_order <- infolist$ID[infolist$ID %in% file_ids]
-idx <- match(indicator_order, file_ids)
-files <- files[idx]
-
-
-
-files_2 <- sort(list.files(path = image_dir,
-                         pattern = "^ad2_map_.*\\.png$",
-                         full.names = TRUE,
-                         recursive = FALSE))
-
-
-files_3 <- sort(list.files(path = image_dir,
-                         pattern = "^overlay-.*\\.png$",
-                         full.names = TRUE,
-                         recursive = FALSE))
-
-
-files_4 <- sort(list.files(path = image_dir,
-                         pattern = "^scatter-.*\\.png$",
-                         full.names = TRUE,
-                         recursive = FALSE))
-
-
-
-
-files_5 <- sort(list.files(path = image_dir,
-                         pattern = "^ridge_.*\\.png$",
-                         full.names = TRUE,
-                         recursive = FALSE))
-
-
-files_6 <- sort(list.files(path = image_dir,
-                         pattern = "^interval-ad1-.*\\.png$",
-                         full.names = TRUE,
-                         recursive = FALSE))
-
-
-files_7 <- sort(list.files(path = image_dir,
-                         pattern = "^interval-ad2-.*\\.png$",
-                         full.names = TRUE,
-                         recursive = FALSE))
-
-files_yr1 <- sort(list.files(
-  path       = image_dir,
-  pattern    = paste0("^Basic-.*-", yr1, "\\.png$"),
-  full.names = TRUE,
-  recursive  = FALSE
-))
-
-files_yr2 <- sort(list.files(
-  path       = image_dir,
-  pattern    = paste0("^Basic-.*-", yr2, "\\.png$"),
-  full.names = TRUE,
-  recursive  = FALSE
-))
-
-
-
-
-
-
-```
-
 
 ## Overview
 
@@ -316,6 +237,7 @@ For each indicator, two sets of estimates are shown based on the latest and the 
 ## Country information
 
 DHS surveys included `r c1 ` clusters in `r yr1` and `r c2 ` clusters in `r yr2`. Table 1 presents national estimates for 20 indicators from the two survey years. The subnational prevalence results are provided for `r ad11` Admin-1 areas and `r ad12` Admin-2 areas in this report.
+
 
 
 ```{r }
@@ -547,30 +469,16 @@ id  <- indicatorlists[i]
 def <- infolist$Full_definition[infolist$ID == id]
 short <- infolist$Description[infolist$ID == id]
 
+# 
+# 
+
+
+    
+  cat("\\newpage\n\n")
 cat(sprintf("## %s\n\n", short))
-
 cat(sprintf("`%s`: %s\n\n", id, def))
-
-  
-cat("\\textbf{Sampling information for previous survey}\n\n")
-    cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
-      cat(paste0(tab3[tab3$ID==indicatorlists[i], ]$previous_no_ad2," Admin-2 areas have no samples, ",
-                 tab3[tab3$ID==indicatorlists[i], ]$previous_fixed)," Admin-2 areas have unstable variance." , "\n\n", sep = "")
-    
-  if (i <= length(files_yr1)) latex_img(files_yr1[i],  ".75\\linewidth")
-  cat("\\newpage\n\n")
-
-  cat("\\textbf{Sampling information for current survey}\n\n")
-   cat( infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
-         cat(paste0(tab3[tab3$ID==indicatorlists[i], ]$current_no_ad2," Admin-2 areas have no samples, ",
-                 tab3[tab3$ID==indicatorlists[i], ]$current_fixed)," Admin-2 areas have unstable variance." , "\n\n", sep = "")
-    
-   
-  if (i <= length(files_yr2)) latex_img(files_yr2[i],  ".75\\linewidth")
-  cat("\\newpage\n\n")
-
   cat("\\textbf{Maps for Admin-1 unsmoothed weighted estimates}\n\n")
-   cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
+   # cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
   if (i <= length(files))     latex_img(files[i],  ".8\\linewidth")
   cat("\\newpage\n\n")
 
@@ -579,13 +487,13 @@ cat("\\textbf{Sampling information for previous survey}\n\n")
 
   if (i <= length(files_2))   latex_img(files_2[i], ".8\\linewidth")
    
-     cat("\\newpage\n\n")
-       cat("\\textbf{Overlay plots for Admin-1 unsmoothed and Admin-2 smoothed weighted estimates}\n\n")
-  if (i <= length(files_3))   latex_img(files_3[i], ".8\\linewidth")
-       cat("\\textbf{Scatter plots for Admin-2 unsmoothed and smoothed weighted estimates }\n\n")
-
-  if (i <= length(files_4))   latex_img(files_4[i], ".7\\linewidth")
-   
+  #    cat("\\newpage\n\n")
+  #      cat("\\textbf{Overlay plots for Admin-1 unsmoothed and Admin-2 smoothed weighted estimates}\n\n")
+  # if (i <= length(files_3))   latex_img(files_3[i], ".8\\linewidth")
+  #      cat("\\textbf{Scatter plots for Admin-2 unsmoothed and smoothed weighted estimates }\n\n")
+  # 
+  # if (i <= length(files_4))   latex_img(files_4[i], ".7\\linewidth")
+  #  
        cat("\\newpage\n\n")
   cat("\\textbf{Ridge plots for Admin-1 results}\n\n")
   cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
@@ -593,17 +501,7 @@ cat("\\textbf{Sampling information for previous survey}\n\n")
   if (i <= length(files_5))   latex_img(files_5[i], ".9\\linewidth")
 
   
-       cat("\\newpage\n\n")
 
-    cat("\\textbf{Interval plots for Admin-1 weighted estimates}\n\n")
-  cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
-  if (i <= length(files_6))   latex_img(files_6[i], ".9\\linewidth")
-    
-   cat("\\newpage\n\n")
-
-     cat("\\textbf{Interval plots for Admin-2 smoothed weighted estimates}\n\n")
-  cat(infolist[infolist$ID == indicatorlists[i], ]$Description, "\n\n", sep = "")
-  if (i <= length(files_7))   latex_img(files_7[i], "\\linewidth")
 
     
    

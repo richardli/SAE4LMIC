@@ -8,7 +8,7 @@ save_tab2_from_files <- function(country, adm_name = "res_adm0-", ids = indicato
   # helper: read (est, lower, upper) triplet from one file
   read_triplet <- function(ind, yr) {
     results_path <- file.path(source_path, "Gates-results", "Results", country, yr)
-    qfile <- file.path(results_path, paste0(adm_name, ind, ".qs"))
+    qfile <- resolve_qs(results_path, adm_name, ind)
     if (!file.exists(qfile)) return(c(NA_real_, NA_real_, NA_real_))
     tryCatch({
       rn <- qs::qread(qfile)$res.natl
@@ -718,8 +718,8 @@ for (indicator in indicatorlist ) {
   # yr2=max(surveys[surveys$country==country,]$year)
   results_path_yr2 <- file.path(source_path, middle_path, country, yr2)
   
-  qfile_adm1 <- file.path(results_path_yr1, paste0(ad2_name, indicator, ".qs"))
-  qfile_adm2 <- file.path(results_path_yr2, paste0(ad2_name, indicator, ".qs"))
+  qfile_adm1 <- resolve_qs(results_path_yr1, ad2_name, indicator)
+  qfile_adm2 <- resolve_qs(results_path_yr2, ad2_name, indicator)
   
   
   old <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("tryCatched: Failed to read ", qfile_adm1, ": ", e$message); return("failed") })
@@ -1033,8 +1033,8 @@ for (indicator in indicatorlist ) {
   yr2=max(surveys[surveys$country==country,]$year)
   results_path_yr2 <- file.path(source_path, middle_path, country, yr2)
   
-  qfile_adm1 <- file.path(results_path_yr1, paste0(ad1_name, indicator, ".qs"))
-  qfile_adm2 <- file.path(results_path_yr2, paste0(ad1_name, indicator, ".qs"))
+  qfile_adm1 <- resolve_qs(results_path_yr1, ad1_name, indicator)
+  qfile_adm2 <- resolve_qs(results_path_yr2, ad1_name, indicator)
   
   
   res_adm11 <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("tryCatched: Failed to read ", qfile_adm1, ": ", e$message); return("failed") })

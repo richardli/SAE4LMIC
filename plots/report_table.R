@@ -40,11 +40,21 @@ shapeused<- read.csv(file.path(git_path,  "info", "shapefileList.csv"))
 indicatorlist=infolist$ID
 
 
-save_tab1 <- function(country, 
+# helper: build (and create) the table output dir, with an optional year-pair
+# subfolder (out_sub), e.g. estimates/<country>/<yr1>-<yr2>/.
+.tab_out_dir <- function(country, out_middle, out_sub = NULL) {
+  d <- file.path(source_path, out_middle, country)
+  if (!is.null(out_sub)) d <- file.path(d, out_sub)
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE, showWarnings = FALSE)
+  d
+}
+
+save_tab1 <- function(country,
                       adm_name,
                       ids=infolist$ID,
                       middle_path="Gates-results/Results",
-                      out_middle="Gates-results/estimates"
+                      out_middle="Gates-results/estimates",
+                      out_sub = NULL
                       ) {
   
 
@@ -59,7 +69,7 @@ save_tab1 <- function(country,
   # helper to read a single value
   get_one <- function(ind, yr) {
     results_path <- file.path(source_path, middle_path, country, yr)
-    qfile <- file.path(results_path, paste0(adm_name, ind, ".qs"))
+    qfile <- resolve_qs(results_path, adm_name, ind)
     if (!file.exists(qfile)) return(NA_real_)
     val <- tryCatch(qs::qread(qfile)$res.natl$direct.est, error = function(e) NA_real_)
     as.numeric(val)
@@ -84,7 +94,7 @@ save_tab1 <- function(country,
 
   print(tab)
   # write CSV
-  out_dir <- file.path(source_path, out_middle, country)
+  out_dir <- .tab_out_dir(country, out_middle, out_sub)
   out_file <- file.path(out_dir, "National.csv")
   readr::write_csv(tab, out_file)
   message("Saved: ", out_file)
@@ -146,7 +156,8 @@ save_tab3 <- function(country,
                       ad2_name = "new_res_adm2_fix-",
                       ids=infolist$ID,
                       middle_path="Gates-results/Results",
-                      out_middle="Gates-results/estimates"
+                      out_middle="Gates-results/estimates",
+                      out_sub = NULL
                       ) {
   
   indicators=infolist$ID
@@ -174,7 +185,7 @@ save_tab3 <- function(country,
   # helper: read qfile and compute (no_ad2, fixed)
   get_triplet <- function(ind, yr) {
     results_path  <- file.path(source_path, middle_path, country, yr)
-    qfile_adm2   <- file.path(results_path, paste0(ad2_name, ind, ".qs"))
+    qfile_adm2   <- resolve_qs(results_path, ad2_name, ind)
     if (!file.exists(qfile_adm2)) return(c(NA_real_, NA_real_))
     x <- tryCatch(qs::qread(qfile_adm2), error = function(e) NULL)
     if (is.null(x)) return(c(NA_real_, NA_real_))
@@ -199,7 +210,7 @@ save_tab3 <- function(country,
   names(tab3) <- c("ID", year_cols)
   
   # write CSV
-  out_dir <- file.path(source_path,out_middle, country)
+  out_dir <- .tab_out_dir(country, out_middle, out_sub)
   out_file <- file.path(out_dir, "National3.csv")
   write.csv(tab3, out_file, row.names = FALSE)
   message("Saved: ", out_file)
@@ -236,11 +247,12 @@ for (ctry in countryList) {
 
 
 
-save_tab456 <- function(country, 
+save_tab456 <- function(country,
                         adm_name,
                         ids=infolist$ID,
                         middle_path="Gates-results/Results",
-                        out_middle="Gates-results/estimates"
+                        out_middle="Gates-results/estimates",
+                        out_sub = NULL
 ) {
   
   
@@ -255,7 +267,7 @@ save_tab456 <- function(country,
   # helper to read a single value
   get_one <- function(ind, yr) {
     results_path <- file.path(source_path, middle_path, country, yr)
-    qfile <- file.path(results_path, paste0(adm_name, ind, ".qs"))
+    qfile <- resolve_qs(results_path, adm_name, ind)
     if (!file.exists(qfile)) return(NA_real_)
     dt <- tryCatch(qs::qread(qfile)$data.info, error = function(e) NA_real_)
     dt
@@ -323,16 +335,16 @@ save_tab456 <- function(country,
   
   
   
-  out_dir <- file.path(source_path, out_middle, country)
+  out_dir <- .tab_out_dir(country, out_middle, out_sub)
   out_file <- file.path(out_dir, "National_clusters.csv")
   readr::write_csv(tab_clusters, out_file)
   
   
-  out_dir <- file.path(source_path, out_middle, country)
+  out_dir <- .tab_out_dir(country, out_middle, out_sub)
   out_file <- file.path(out_dir, "National_events.csv")
   readr::write_csv(tab_events, out_file)
   
-  out_dir <- file.path(source_path, out_middle, country)
+  out_dir <- .tab_out_dir(country, out_middle, out_sub)
   out_file <- file.path(out_dir, "National_samples.csv")
   readr::write_csv(tab_samples, out_file)
   

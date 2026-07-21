@@ -68,7 +68,7 @@ countryList= unique(surveys$country)
 indicatorlist=infolist$ID
 
 
-for (i in 26 ) { #seq_len(nrow(surveys)) which(surveys$country %in% countryList)
+for (i in 7 ) { #seq_len(nrow(surveys)) which(surveys$country %in% countryList)
 
   summary_df<-c()
   res_data_ad0<-list()

@@ -62,8 +62,11 @@ countryList=c("Burkina Faso" ,
 ## Admin note: replace with only a subset of countries when updating
 country <- "Malawi"
 
+
+country <- "Ethiopia"
+
 #which(surveys$country %in% country)
-for (i in 26:27 ) {
+for (i in 7 ) {
   row <- surveys[i, ]
   country <- as.character(row$country)
   year <- as.character(row$year)
@@ -211,7 +214,7 @@ for (i in 26:27 ) {
 
 
 
-
+# the following code runs for all countries
 n_admin=n_admin2=c()
 #table for number of admin 1 and admin 2 and shapefile. 
 countryList=unique(shapeused$country)
@@ -279,6 +282,98 @@ summary_tbl$shapefile[which(summary_tbl$country=="Sierra Leone")]<-"WHO"
 
 
 write.csv(summary_tbl, file.path(git_path, "info/shapefileList.csv"), row.names = FALSE)
+
+
+
+
+# ============================================================================
+# Step 1.2 (incremental) — Update shapefileList.csv for the selected survey(s)
+# ONLY. Use this instead of the full-rebuild block above when adding a new
+# survey: it loads the existing shapefileList.csv, recomputes the row(s) for the
+# survey(s) in `sel`, upserts them (replace if country+year already exists,
+# otherwise append), and saves. Every other country's row is left untouched, so
+# it never overwrites rows for countries without a local basic.Rdata.
+# ============================================================================
+
+# Which survey(s) to update. Pick ONE:
+
+# Option A — all local surveys (safe: upsert only touches rows it recomputes)
+countryList <- "Ethiopia"
+yearList    <- NULL
+
+# Option B — one newly added survey. To use, comment out Option A above.
+# countryList <- "Ethiopia"
+# yearList    <- 2024
+
+sel <- which(surveys$country %in% countryList &
+             (if (is.null(yearList)) TRUE else surveys$year %in% yearList))
+if (length(sel) == 0) stop("No matching surveys for the chosen countryList/yearList.")
+
+# helper: build one shapefileList row from a survey's basic.Rdata
+build_shape_row <- function(i) {
+  rowi        <- surveys[i, ]
+  country     <- as.character(rowi$country)
+  year        <- as.character(rowi$year)
+  survey_name <- if (!is.null(rowi$survey_name)) as.character(rowi$survey_name) else NA_character_
+
+  message(sprintf("\n--- shapefileList row: %s %s (%s) ---", country, year, survey_name))
+
+  results_path <- file.path(source_path, "Gates-results/Results", country, year)
+  basic_path   <- file.path(results_path, "basic.Rdata")
+
+  n_admin1 <- n_admin2 <- n_geo_cluster <- n_cluster <- NA_integer_
+  if (file.exists(basic_path)) {
+    # load into a temporary env so we don't pollute the global env
+    e <- new.env(parent = emptyenv())
+    load(basic_path, envir = e)
+    n_admin1      <- tryCatch(length(get("admin.info1", envir = e)$data$admin1.name),      error = function(...) NA_integer_)
+    n_admin2      <- tryCatch(length(get("admin.info2", envir = e)$data$admin2.name.full), error = function(...) NA_integer_)
+    n_geo_cluster <- tryCatch(length(get("geo", envir = e)$DHSCLUST),                      error = function(...) NA_integer_)
+    n_cluster     <- tryCatch(length(get("cluster.info", envir = e)$data$cluster),         error = function(...) NA_integer_)
+  } else {
+    warning("Missing basic.Rdata for: ", country, " ", year)
+  }
+
+  # shapefile source per country (default geoboundaries)
+  shp <- "geoboundaries"
+  if (country == "Tanzania")     shp <- "GADM"
+  if (country == "Sierra Leone") shp <- "WHO"
+
+  data.frame(
+    survey_name   = survey_name,
+    country       = country,
+    year          = as.integer(year),
+    n_admin1      = n_admin1,
+    n_admin2      = n_admin2,
+    n_geo_cluster = n_geo_cluster,
+    n_cluster     = n_cluster,
+    shapefile     = shp,
+    stringsAsFactors = FALSE
+  )
+}
+
+new_rows <- do.call(rbind, lapply(sel, build_shape_row))
+
+shapefile_csv <- file.path(git_path, "info/shapefileList.csv")
+if (file.exists(shapefile_csv)) {
+  existing <- read.csv(shapefile_csv, stringsAsFactors = FALSE)
+  existing$year <- as.integer(existing$year)
+  # drop the row(s) being replaced (match on country + year); keep everything else
+  drop_key <- paste(new_rows$country, new_rows$year, sep = "|")
+  keep     <- !(paste(existing$country, existing$year, sep = "|") %in% drop_key)
+  existing <- existing[keep, , drop = FALSE]
+  new_rows <- new_rows[, names(existing), drop = FALSE]   # align column order
+  summary_tbl <- rbind(existing, new_rows)
+} else {
+  summary_tbl <- new_rows
+}
+
+summary_tbl <- summary_tbl[order(summary_tbl$country, summary_tbl$year), ]
+
+write.csv(summary_tbl, file.path(git_path, "info/shapefileList.csv"), row.names = FALSE)
+
+message("Updated shapefileList.csv for: ",
+        paste(new_rows$country, new_rows$year, collapse = ", "))
 
 
 

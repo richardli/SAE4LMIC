@@ -355,15 +355,15 @@ for(country in country){
     yr2=max(surveys[surveys$country==country,]$year)
     results_path_yr2 <- file.path(source_path, middle_path, country, yr2)
     
-    qfile_adm1 <- file.path(results_path_yr1, paste0(ad2_name, indicator, ".qs"))
-    qfile_adm2 <- file.path(results_path_yr2, paste0(ad2_name, indicator, ".qs"))
+    qfile_adm1 <- resolve_qs(results_path_yr1, ad2_name, indicator)
+    qfile_adm2 <- resolve_qs(results_path_yr2, ad2_name, indicator)
     
     
     old <- tryCatch(qs::qread(qfile_adm1), error = function(e) { message("Failed to read ", qfile_adm1, ": ", e$message); return("failed") })
     new <- tryCatch(qs::qread(qfile_adm2), error = function(e) { message("Failed to read ", qfile_adm2, ": ", e$message); return("failed") })
     
-    qfile_adm11 <- file.path(results_path_yr1, paste0(ad1_name, indicator, ".qs"))
-    qfile_adm22 <- file.path(results_path_yr2, paste0(ad1_name, indicator, ".qs"))
+    qfile_adm11 <- resolve_qs(results_path_yr1, ad1_name, indicator)
+    qfile_adm22 <- resolve_qs(results_path_yr2, ad1_name, indicator)
     
     
     res_adm11 <- tryCatch(qs::qread(qfile_adm11), error = function(e) { message("Failed to read ", qfile_adm1, ": ", e$message); return("failed") })

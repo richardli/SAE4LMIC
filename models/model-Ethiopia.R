@@ -7,20 +7,22 @@ print(indicatorlist)
 indicatorlist <- indicatorlist
 print(source_path)
 
-# # If special treatments are needed for some indicators, update the script below with if-statements
-# for (indicator_to_run in indicatorlist) {
-# 	source(here(git_path, "models", "model-core.R"))
-# }
-
 # If special treatments are needed for some indicators, update the script below with if-statements
-# This loop use variance fix code in "model-core-newvarfix.R"
+# 2024 round onward: use the canonical model-core.R (writes plain-prefixed results,
+# e.g. res_adm0-<ind>.qs). The legacy model-core-newvarfix.R (new_ prefix) was used
+# for the 2025 round; results with either prefix are read transparently via
+# misc/resolve_qs.R in the report pipeline.
+for (indicator_to_run in indicatorlist) {
+  source(here(git_path, "models", "model-core.R"))
+}
 
 
 # indicatorlist1<- c( "CO_MOBB_W_MOB", "CM_ECMR_C_NNF", "ED_LITR_W_LIT")
 
-for (indicator_to_run in indicatorlist) {
-  source(here(git_path, "models", "model-core-newvarfix.R"))
-}
+# Legacy 2025-round path (new_ prefix) — kept for reference:
+# for (indicator_to_run in indicatorlist) {
+#   source(here(git_path, "models", "model-core-newvarfix.R"))
+# }
 
 
 
@@ -28,7 +30,7 @@ for (indicator_to_run in indicatorlist) {
 ## ---------------------------- check results ------------------------------##
 ## -------------------------------------------------------------------------##
 
-source(here(git_path, "misc", "check-modelresult.R"))
+source(here(git_path, "check", "check-modelresult.R"))
 
 check_tab <- check_model_results(
   country_to_run = country_to_run,

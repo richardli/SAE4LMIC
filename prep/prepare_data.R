@@ -75,15 +75,17 @@ countryList=c("Zambia",
               "Mozambique"
 )
 
-
-
-
 indicatorlist=c("RH_DELP_C_DHT","RH_DELP_C_PRT")
 countryList=c("Mali","Senegal")
 
 
+
+#07/21/2026
+
+countryList=c("Ethopia")
+
 #which(surveys$country %in% countryList
-for (i in 26 ) {
+for (i in 7 ) {
 
 
 
