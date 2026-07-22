@@ -207,10 +207,9 @@ library(INLA)
 
 
 
-# source_path is the folder where this github repository lives in
-source_path <- "/Users/qianyu/Dropbox/binary_code/pcg/GATES"
-# source_path is the path for this github repository
-git_path <- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/SAE4LMIC"
+# git_path = this repo (SAE4LMIC); source_path = its parent (GATES root)
+git_path    <- here::here()
+source_path <- dirname(git_path)
 
 # Read in the list of indicators and surveys from the spreadsheet
 infolist <- read.csv(file.path(git_path, "info", "infolist.csv"))

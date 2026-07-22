@@ -31,7 +31,8 @@ git_path <- here::here()
 
 
 
-source_path<- "/Users/qianyu/Dropbox/binary_code/pcg/GATES/"
+git_path    <- here::here()
+source_path <- dirname(git_path)
 infolist <- read.csv(file.path(git_path, "info", "infolist.csv"))
 surveys <- read.csv(file.path(git_path,  "info", "surveyslist.csv"))
 shapeused<- read.csv(file.path(git_path,  "info", "shapefileList.csv"))

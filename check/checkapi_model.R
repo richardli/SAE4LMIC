@@ -161,7 +161,7 @@ for (i in which(surveys$country %in% countryList)) { #seq_len(nrow(surveys))
     
     
     
-    qfile=  paste0(file.path(results_path,paste0("new_res_adm0-",indicator)),".qs")
+    qfile=  paste0(file.path(results_path,paste0("res_adm0-",indicator)),".qs")
     
     
     

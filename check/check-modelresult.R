@@ -4,6 +4,11 @@
 
 
 
+# Resolve plain (model-core.R) vs new_ (model-core-newvarfix.R) result prefixes
+# per survey folder, so the checks below detect BOTH conventions. Needs git_path
+# (set by model-setup.R when this is sourced from a model-*.R script).
+if (!exists("resolve_qs")) source(file.path(git_path, "misc", "resolve_qs.R"))
+
 check_model_results <- function(
     country_to_run,
     indicatorlist,
@@ -48,22 +53,22 @@ check_model_results <- function(
       
       ## ---------- direct model outputs ----------
       row$res_adm0_class      <- get_class_or_status(
-        file.path(results_path, paste0("new_res_adm0-", indicator, ".qs"))
+        resolve_qs(results_path, "res_adm0-", indicator)
       )
       row$res_adm1_class      <- get_class_or_status(
-        file.path(results_path, paste0("new_res_adm1-", indicator, ".qs"))
+        resolve_qs(results_path, "res_adm1-", indicator)
       )
       row$res_adm2_fix_class  <- get_class_or_status(
-        file.path(results_path, paste0("new_res_adm2_fix-", indicator, ".qs"))
+        resolve_qs(results_path, "res_adm2_fix-", indicator)
       )
       row$res_adm2_class      <- get_class_or_status(
-        file.path(results_path, paste0("new_res_adm2-", indicator, ".qs"))
+        resolve_qs(results_path, "res_adm2-", indicator)
       )
-      
+
       ## ---------- FH model object ----------
       # top-level FH object class
       row$FH_adm2_fix_nest_class <- get_class_or_status(
-        file.path(results_path, paste0("new_FH_adm2_fix_nest-", indicator, ".qs"))
+        resolve_qs(results_path, "FH_adm2_fix_nest-", indicator)
       )
       
       
@@ -129,10 +134,7 @@ check_FH_summary_hyperpar <- function(
       # step <- step + 1L
       # setTxtProgressBar(pb, step)
       # 
-      qfile_summary <- file.path(
-        results_path,
-        paste0("new_summary-FH_adm2_fix_nest-", indicator, ".qs")
-      )
+      qfile_summary <- resolve_qs(results_path, "summary-FH_adm2_fix_nest-", indicator)
       
       
       hp <- get_hyperpars(qfile_summary)  # c(Precision=..., phi=...)
@@ -207,10 +209,7 @@ check_FH_summary_hyperpar_ontimeuse <- function(
       # step <- step + 1L
       # setTxtProgressBar(pb, step)
       # 
-      qfile_summary <- file.path(
-        results_path,
-        paste0("new_FH_adm2_fix_nest-", indicator, ".qs")
-      )
+      qfile_summary <- resolve_qs(results_path, "FH_adm2_fix_nest-", indicator)
       
       
       hp <- get_hyperpars_ontimeuse(qfile_summary)  # c(Precision=..., phi=...)

@@ -125,7 +125,9 @@ report_year_pair("Malawi", 2015, 2024,
 #
 # --- mixed old/new prefixes handled automatically ---
 #     Ethiopia 2019 = new_ , 2024 = plain  -> each resolved independently
-report_year_pair("Ethiopia", 2019, 2024)
+report_year_pair("Ethiopia", 2019, 2024, with_tables = T)
+# report_year_pair("Ethiopia", 2019, 2024, with_tables = F,  prefix_set  =prefix_set_core())
+
 #
 # # --- pick a non-min/max pair from a 3+ survey country ---
 # report_year_pair("Ethiopia", yr1 = 2016, yr2 = 2024)

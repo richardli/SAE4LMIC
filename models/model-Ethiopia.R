@@ -17,6 +17,18 @@ for (indicator_to_run in indicatorlist) {
 }
 
 
+
+country_to_run   <- "Ethiopia"
+year_to_run      <- 2024              # the one year to fit
+indicator_to_run <- infolist$ID       # or a subset
+source(here(git_path, "models", "model-core-oneyear.R"))
+
+country_to_run   <- "Ethiopia"
+year_to_run      <- 2019
+indicator_to_run <- infolist$ID
+source(here(git_path, "models", "model-core-oneyear.R"))
+
+
 # indicatorlist1<- c( "CO_MOBB_W_MOB", "CM_ECMR_C_NNF", "ED_LITR_W_LIT")
 
 # Legacy 2025-round path (new_ prefix) — kept for reference:

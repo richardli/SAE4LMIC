@@ -3,6 +3,11 @@
 
 library(rdhs)
 library(dplyr)
+library(here)
+
+# git_path = this repo (SAE4LMIC); source_path = its parent (GATES root)
+git_path    <- here::here()
+source_path <- dirname(git_path)
 
 set_rdhs_config(email = "qdong14@ucsc.edu",
                 project = "Small Area Estimaiton Using DHS Data")#update_rdhs_config
@@ -114,7 +119,7 @@ dhs_survey_list <- dhs_survey_list[dhs_survey_list$SurveyYear>2000 & dhs_survey_
 
 # dhs_survey_list[dhs_survey_list$SurveyId==SurveyId_list[147],]
 
-main_dir="/Users/qianyu/Dropbox/DHS-indicators"
+main_dir <- path.expand("~/Dropbox/DHS-indicators")   # external DHS archive (not under source_path)
 output_dir=file.path(main_dir,"Step_3_Data","all_survey_est")
 output_dir <-  file.path(source_path, "Gates-data/API/admin0")
 
