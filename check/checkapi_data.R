@@ -165,6 +165,18 @@ for (i in 7 ) { #seq_len(nrow(surveys)) which(surveys$country %in% countryList)
       }
 
 
+      # Child-mortality indicators: the API returns a 5-year and a 10-year row;
+      # keep the five-year one (matches CM_ECMR_C_U5F / NNF definitions)
+      if (API %in% c("CM_ECMR_C_U5M", "CM_ECMR_C_NNR")) {
+        vals5 <- tmp_res$Value[
+          which(
+            tmp_res$IndicatorId == API &
+              tmp_res$ByVariableLabel %in% c("Five years preceding the survey")
+          )
+        ]
+        if (length(vals5) > 0) vals <- vals5   # else keep vals (first row is the 5-year one)
+      }
+
       if (length(vals) == 0) {
         api0 <- NA_real_
       } else if (length(vals) > 1) {
@@ -184,7 +196,7 @@ for (i in 7 ) { #seq_len(nrow(surveys)) which(surveys$country %in% countryList)
       # Normalize if it looks like a percentage (guard against NA/length-0)
       api0 <- suppressWarnings(as.numeric(api0))
       if (!is.na(api0) && api0 > 1) api0 <- api0 / 100
-      if (API=="CM_ECMR_C_NNR") api0 <- api0 / 10
+      if (API %in% c("CM_ECMR_C_NNR", "CM_ECMR_C_U5M")) api0 <- api0 / 10   # per 1,000 -> proportion
     }
 
 
@@ -222,7 +234,8 @@ for (i in 7 ) { #seq_len(nrow(surveys)) which(surveys$country %in% countryList)
 
         res_adm0<-surveyPrev::directEST(
           data = data, cluster.info = cluster.info, admin = 0,
-          admin.info = admin.info1, aggregation = FALSE, var.fix = TRUE,
+          admin.info = admin.info1, aggregation = FALSE,
+          var.fix = !("age" %in% names(data)),   # var.fix has no mortality path (person-month data)
           alt.strata = "v022",
           CI=0.9
         )
